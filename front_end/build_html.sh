@@ -40,6 +40,11 @@ cat header.html navbar_top.html navbar_course.html navbar_assignment.html navbar
 cat header.html navbar_top.html navbar_course.html navbar_assignment.html navbar_exercise.html navbar_menu.html navbar_bottom.html container_color.html edit_assignment.html container_bottom.html footer.html > "$OUTPUT/edit_assignment.html"
 cat header.html navbar_top.html navbar_course.html navbar_assignment.html navbar_menu.html navbar_bottom.html container_color.html resave_exercises.html container_bottom.html footer.html > "$OUTPUT/resave_exercises.html"
 cat header.html javascript_container.html navbar_top.html navbar_course.html navbar_assignment.html navbar_exercise.html navbar_menu.html navbar_bottom.html container_color.html exercise_functions.html exercise.html container_bottom.html footer.html > "$OUTPUT/exercise.html"
+
+# Aidan put this here
+cat header.html javascript_container.html navbar_top.html navbar_course.html navbar_assignment.html navbar_exercise.html navbar_menu.html navbar_bottom.html container_color.html exercise_functions.html exercise_llm.html container_bottom.html footer.html > "$OUTPUT/exercise_llm.html"
+
+
 cat header.html javascript_container.html navbar_top.html navbar_course.html navbar_assignment.html navbar_exercise.html navbar_menu.html navbar_bottom.html container_color.html edit_exercise.html container_bottom.html footer.html > "$OUTPUT/edit_exercise.html"
 cat header.html navbar_top.html navbar_course.html navbar_assignment.html navbar_exercise.html navbar_menu.html navbar_bottom.html container_color.html exercise_functions.html view_instructor_solution.html container_bottom.html footer.html > "$OUTPUT/view_instructor_solution.html"
 cat header.html navbar_top.html navbar_course.html navbar_assignment.html navbar_exercise.html navbar_menu.html navbar_bottom.html container_color.html exercise_functions.html view_peer_solution.html container_bottom.html footer.html > "$OUTPUT/view_peer_solution.html"

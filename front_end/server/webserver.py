@@ -89,7 +89,10 @@ def make_app(settings_dict):
             url(r"/view_request/([^/]+)/([^/]+)/([^/]+)/([^/]+)", ViewHelpRequestsHandler, name="view_request"),
             url(r"/view_assignment_scores/([^/]+)/([^/]+)", ViewAssignmentScoresHandler, name="view_assignment_scores"),
             url(r"/view_exercise_scores/([^/]+)/([^/]+)/([^/]+)", ViewExerciseScoresHandler, name="view_exercise_scores"),
-            url(r"/view_student_assignment_scores/([^/]+)/([^/]+)", ViewStudentAssignmentScoresHandler, name="view_student_assignment_scores")
+            url(r"/view_student_assignment_scores/([^/]+)/([^/]+)", ViewStudentAssignmentScoresHandler, name="view_student_assignment_scores"),
+
+            # Aidan added this
+            # url(r"/llm_chat", LLMHandler, name="llm_chat"),
         ],
         autoescape=None,
         debug=(int(settings_dict["f_num_processes"]) == 1 and 'DEBUG' in os.environ and os.environ['DEBUG'] == 'true'),
