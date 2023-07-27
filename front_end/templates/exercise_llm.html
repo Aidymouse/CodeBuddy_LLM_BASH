@@ -366,6 +366,7 @@
                     <textarea class="textarea is-primary monospace text-18" rows="3">{% if help_request and help_request["suggestion"] %}{{ help_request["suggestion"] }}{% else %}No suggestion has been made yet.{% end %}</textarea>
                 </div>
             </div>-->
+            <script src="/static/env.js"></script>
             <script>
 
                 // TODO: Update the system message to include students code
@@ -407,7 +408,8 @@
                     "stop": [" Human:", " AI:"]
                     */
 
-                    let open_ai_key = "[[KEY_GOES_HERE]]"
+
+                    let open_ai_key = env.OPENAI_API_KEY
 
                     $.ajax({
                         type: 'POST',

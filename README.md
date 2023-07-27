@@ -70,7 +70,15 @@ For most users, the preferred option is to run the front end within Docker. To d
 1. Use the `cd` command to change your current working directory to `front_end`.
 2. Build the HTML files. Execute the following command. `make html`
 3. Build the `static` directory. Execute the following command. When it is done, hit Ctrl-C to move on. `make build-watch`
-4. Start the development server. Execute the following command. `make dev-server`
+4. Make a new file in `static` called `env.js` with the following structure
+
+```
+var env = {
+    OPENAI_API_KEY: [[your openAI api key goes here]]
+}
+```
+
+5. Start the development server. Execute the following command. `make dev-server`
 
 When you modify files in the `front_end/templates` directory, you will need to re-run `make html`. When you change any of the Python code, you will need to hit Ctrl-C to stop the development server and then re-execute `make dev-server`.
 
