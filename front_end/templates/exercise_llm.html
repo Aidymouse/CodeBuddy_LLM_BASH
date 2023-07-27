@@ -206,6 +206,8 @@
                     </div>
                 </div>
 
+                <button onclick="next_line_of_code()">Request Next Line</button>
+
             </div>
 
             <div id="saved_div" class="ml-0 mt-0 mr-2 is-pulled-right mt-0 smaller-font"></div>
@@ -436,6 +438,38 @@
                 }
 
                 function get_code_from_editor() {
+
+                }
+
+                function next_line_of_code() {
+
+                    console.log(assignment_details);
+
+                    let message = `The exercise is [[exercise]]. The current code is "${editor.getValue()}". What is a reasonable next line of code?`
+
+                    message = message.replace("[[exercise]]", exercise_details['instructions']);
+
+                    let open_ai_key = env.OPENAI_API_KEY
+
+                    $.ajax({
+                        type: 'POST',
+                        url: "https://api.openai.com/v1/chat/completions",
+                        beforeSend: (request) => {
+                            request.setRequestHeader("Content-Type", "application/json"),
+                                request.setRequestHeader("Authorization", `Bearer ${open_ai_key}`)
+                        },
+                        data: llm_data,
+                        async: true
+                    }).done(result => {
+                        console.log(result)
+
+                        //let response_message = result.choices[0].message
+                        //llm_messages.push(response_message)
+
+                        // Update html to match
+                        //$("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="llm-message">${response_message.content}</div>`);
+
+                    })
 
                 }
             </script>
