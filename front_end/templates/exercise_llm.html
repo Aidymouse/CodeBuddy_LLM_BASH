@@ -206,7 +206,7 @@
                     </div>
                 </div>
 
-                <button onclick="next_line_of_code()">Request Next Line</button>
+                <button onclick="next_line_of_code_llm()">Request Next Line</button>
 
             </div>
 
@@ -411,7 +411,7 @@
                     */
 
 
-                    let open_ai_key = env.OPENAI_API_KEY
+                    let open_ai_key = "{{ openai_api_key }}" // This just puts the key in text and you can see it in the debugger lol. Probably not good
 
                     $.ajax({
                         type: 'POST',
@@ -441,16 +441,26 @@
 
                 }
 
-                function next_line_of_code() {
+                function next_line_of_code_llm() {
 
-                    console.log(assignment_details);
+                    let exercise_instructions = `{{exercise_details["instructions"]}}`
 
-                    let message = `The exercise is [[exercise]]. The current code is "${editor.getValue()}". What is a reasonable next line of code?`
+                    let message_text = `The exercise is ${exercise_instructions}. The current code is "${editor.getValue()}". What is a reasonable next line of code?`
+                    console.log(message_text);
 
-                    message = message.replace("[[exercise]]", exercise_details['instructions']);
+                    // Format it in the way the LLM wants
+                    let llm_message = {"role": "user", "content": message_text}
+                    let llm_messages = [llm_message]
+                    
+                    let llm_data = `{
+                        "model": "gpt-3.5-turbo",
+                        "messages": ${JSON.stringify(llm_messages)}
+                    }`;
+                    
+                    // Get the API key
+                    let open_ai_key = `{{ openai_api_key }}`
 
-                    let open_ai_key = env.OPENAI_API_KEY
-
+                    // Make request to the API
                     $.ajax({
                         type: 'POST',
                         url: "https://api.openai.com/v1/chat/completions",
@@ -463,11 +473,11 @@
                     }).done(result => {
                         console.log(result)
 
-                        //let response_message = result.choices[0].message
+                        let response_message = result.choices[0].message
                         //llm_messages.push(response_message)
 
                         // Update html to match
-                        //$("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="llm-message">${response_message.content}</div>`);
+                        $("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="llm-message">${response_message.content}</div>`);
 
                     })
 

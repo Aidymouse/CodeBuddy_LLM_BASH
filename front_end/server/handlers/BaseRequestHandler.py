@@ -11,6 +11,7 @@ class BaseRequestHandler(RequestHandler):
         super().prepare()
 
         self.settings_dict = load_yaml_dict(read_file("../Settings.yaml"))
+        self.secrets_dict = load_yaml_dict(read_file("secrets/front_end.yaml"))
         self.content = Content(self.settings_dict)
 
     def get_current_user(self):
