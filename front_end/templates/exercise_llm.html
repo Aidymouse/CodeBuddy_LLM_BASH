@@ -196,17 +196,21 @@
 
                 <!-- LLM Chat Window -->
                 <div id="llm-col">
-                    <div id="chat-name">CodeBuddy</div>
-                    <div id="chat-history"></div>
-                    
-                    <textarea id="chat-input"></textarea>
 
-                    <div id="chat-submit">
-                        <button onclick="submit_to_llm()">Submit</button>
+                    <div id="chat-window">
+                        <div id="chat-name">CodeBuddy</div>
+                        <div id="chat-history"></div>
+                        
+                        <textarea id="chat-input"></textarea>
+
+                        <div id="chat-submit">
+                            <button class="button is-dark" onclick="submit_to_llm()">Submit</button>
+                        </div>
                     </div>
+                    <button class="button" onclick="next_line_of_code_llm()">What's the next line?</button>
+                    <button class="button" onclick="hint_llm()">Give me a hint</button>
                 </div>
 
-                <button onclick="next_line_of_code_llm()">Request Next Line</button>
 
             </div>
 
@@ -371,113 +375,82 @@
             <script src="/static/env.js"></script>
             <script>
 
-                // TODO: Update the system message to include students code
 
                 //let template_system_message = "You are a programming tutor. Your answers are short and simple, around 1-5 sentences. The students code is '[[code]]'"
                 let template_system_message = "You are a programming tutor. Your answers are short and simple, around 1-5 sentences."
                 
                 let initial_system_message = template_system_message.replace("[[code]]", "")
-                let llm_messages = [{ "role": "system", "content": initial_system_message }]
+                let llm_messages = [{ "role": "system", "content": "You are a programming tutor. Your answers are short and simple, around 1-5 sentences." }]
 
                 function submit_to_llm() {
 
+                    if ($("#chat-input").val() == "") return;
+
+                    console.log("Contacting LLM")
+
+                    console.log("{{course_basics['id']}}")
+
                     let chat_input = $("#chat-input").val();
-
-                    llm_messages.push({ "role": "user", "content": chat_input })
-
-                    $("#chat-input").val("");
-                    
-                    // Update system message with current code
-                    let current_code = editor.getValue()
-                    //llm_messages[0].content = template_system_message.replace("[[code]]", current_code)
-                    
-                    console.log(llm_messages)
-
-                    // Add message to chat history
                     $("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="user-message">${chat_input}</div>`);
 
-
-                    let llm_data = `{
-                                    "model": "gpt-3.5-turbo",
-                                    "messages": ${JSON.stringify(llm_messages)}
-                                }`;
-                    /*
-                    "temperature": 0.9,
-                    "max_tokens": 150,
-                    "top_p": 1,
-                    "frequency_penalty": 0.0,
-                    "presence_penalty": 0.6,
-                    "stop": [" Human:", " AI:"]
-                    */
-
-
-                    let open_ai_key = "{{ openai_api_key }}" // This just puts the key in text and you can see it in the debugger lol. Probably not good
+                    $("#chat-input").val("");
 
                     $.ajax({
                         type: 'POST',
-                        url: "https://api.openai.com/v1/chat/completions",
-                        beforeSend: (request) => {
-                            request.setRequestHeader("Content-Type", "application/json"),
-                                request.setRequestHeader("Authorization", `Bearer ${open_ai_key}`)
-                        },
-                        data: llm_data,
+                        url: "/llm_chat/chat/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
+                        data: {"chat_input": chat_input},
                         async: true
-                    }).done(result => {
-                        console.log(result)
-
-                        let response_message = result.choices[0].message
-                        llm_messages.push(response_message)
+                    }).done(result => {                        
+                        let response_message = result
 
                         // Update html to match
-                        $("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="llm-message">${response_message.content}</div>`);
+                        $("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="llm-message">${response_message}</div>`);
 
                     })
 
 
+                    return;
+
 
                 }
 
-                function get_code_from_editor() {
+                function hint_llm() {
+                    
+                    let user_code = get_user_code();
+
+                    $.ajax({
+                        type: 'POST',
+                        url: "/llm_chat/natural_hint/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
+                        data: {"user code": user_code},
+                        async: true
+                    }).done(result => {
+                        console.log(result)
+
+                        //llm_messages.push(response_message)
+
+                        // Update html to match
+                        $("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="llm-message">${result}</div>`);
+
+                    })
 
                 }
 
                 function next_line_of_code_llm() {
 
-                    let exercise_instructions = `{{exercise_details["instructions"]}}`
+                    let user_code = get_user_code()
 
-                    let message_text = `The exercise is ${exercise_instructions}. The current code is "${editor.getValue()}". What is a reasonable next line of code?`
-                    console.log(message_text);
-
-                    // Format it in the way the LLM wants
-                    let llm_message = {"role": "user", "content": message_text}
-                    let llm_messages = [llm_message]
-                    
-                    let llm_data = `{
-                        "model": "gpt-3.5-turbo",
-                        "messages": ${JSON.stringify(llm_messages)}
-                    }`;
-                    
-                    // Get the API key
-                    let open_ai_key = `{{ openai_api_key }}`
-
-                    // Make request to the API
                     $.ajax({
                         type: 'POST',
-                        url: "https://api.openai.com/v1/chat/completions",
-                        beforeSend: (request) => {
-                            request.setRequestHeader("Content-Type", "application/json"),
-                                request.setRequestHeader("Authorization", `Bearer ${open_ai_key}`)
-                        },
-                        data: llm_data,
+                        url: "/llm_chat/next_line/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
+                        data: { "user code": user_code },
                         async: true
                     }).done(result => {
                         console.log(result)
 
-                        let response_message = result.choices[0].message
                         //llm_messages.push(response_message)
 
                         // Update html to match
-                        $("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="llm-message">${response_message.content}</div>`);
+                        $("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="llm-message">${result}</div>`);
 
                     })
 

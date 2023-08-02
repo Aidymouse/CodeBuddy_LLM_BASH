@@ -22,6 +22,7 @@ esbuild.build({
 		'css/profile-styles': 'ui/css/profile-styles.css',
 		'css/modal': 'ui/css/modal.css',
 		'css/timer': 'ui/css/timer.css',
+		'css/llm': 'ui/css/llm.css',
 	},
     bundle: true,
     outdir: 'static/',
