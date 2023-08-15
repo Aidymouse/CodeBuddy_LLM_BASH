@@ -89,7 +89,10 @@ def make_app(settings_dict):
             url(r"/view_request/([^/]+)/([^/]+)/([^/]+)/([^/]+)", ViewHelpRequestsHandler, name="view_request"),
             url(r"/view_assignment_scores/([^/]+)/([^/]+)", ViewAssignmentScoresHandler, name="view_assignment_scores"),
             url(r"/view_exercise_scores/([^/]+)/([^/]+)/([^/]+)", ViewExerciseScoresHandler, name="view_exercise_scores"),
-            url(r"/view_student_assignment_scores/([^/]+)/([^/]+)", ViewStudentAssignmentScoresHandler, name="view_student_assignment_scores")
+            url(r"/view_student_assignment_scores/([^/]+)/([^/]+)", ViewStudentAssignmentScoresHandler, name="view_student_assignment_scores"),
+
+            # Aidan added this
+            url(r"/llm_chat/([^/]+)/([^/]+)/([^/]+)/([^/]+)", LLMHandler, name="llm_chat"),
         ],
         autoescape=None,
         debug=(int(settings_dict["f_num_processes"]) == 1 and 'DEBUG' in os.environ and os.environ['DEBUG'] == 'true'),
@@ -189,6 +192,10 @@ if __name__ == "__main__":
            "key": secrets_dict["google_oauth_key"],
            "secret": secrets_dict["google_oauth_secret"]
         }
+
+        application.settings["openai_api_key"] = secrets_dict["openai_api_key"]
+
+        application.messages = [{ "role": "system", "content": "You are a programming tutor. Your answers are short and simple, around 1-5 sentences." }]
 
         server.bind(int(settings_dict["f_port"]))
         server.start(int(settings_dict["f_num_processes"]))

@@ -78,6 +78,7 @@ class ExerciseHandler(BaseUserHandler):
                     "check_for_restrict_other_assignments": course_details["check_for_restrict_other_assignments"],
                     "help_request": None,
                     "same_suggestion": None,
+                    "openai_api_key": self.secrets_dict["openai_api_key"]
             }
 
 #                    "num_submissions": len(submissions),
@@ -95,6 +96,6 @@ class ExerciseHandler(BaseUserHandler):
                 args['exercise_details'] = exercise_details
                 self.render("spa.html", template_variables=args, **args)
             else:
-                self.render("exercise.html", **args)
+                self.render("exercise_llm.html", **args)
         except Exception as inst:
             render_error(self, traceback.format_exc())

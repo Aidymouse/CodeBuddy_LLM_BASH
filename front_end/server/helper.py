@@ -136,6 +136,8 @@ async def exec_code(settings_dict, code, verification_code, exercise_details, ad
 
         return response
 
+    # [[ BACK END HERE ]]
+
     back_end_config = get_back_end_config(exercise_details["back_end"])
 
     if settings_dict["mode"] == "development":

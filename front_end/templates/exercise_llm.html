@@ -1,0 +1,570 @@
+{% if course_basics["exists"] %}
+    {% if assignment_basics["exists"] %}
+        {% if exercise_basics["exists"] %}
+            <link rel="stylesheet" href="/static/css/modal.css">
+            <link rel="stylesheet" href="/static/css/llm.css">
+
+            {% if assignment_details["has_timer"] and not is_administrator and not is_instructor and not is_assistant %}
+                <link rel="stylesheet" href="/static/css/timer.css">
+
+                <script>
+                    function startTimer() {
+                        start_time_js = new Date("{{ start_time }}");
+                        start_time_js.setMinutes(start_time_js.getMinutes() - start_time_js.getTimezoneOffset());
+
+                        var deadline = start_time_js;
+                        deadline.setHours(deadline.getHours() + {{ assignment_details["hour_timer"] }});
+                        deadline.setMinutes(deadline.getMinutes() + {{ assignment_details["minute_timer"] }});
+
+                        initializeClock('clockdiv', deadline);
+                    }
+
+                    function getTimeRemaining(endtime){
+                        const total = Date.parse(endtime) - Date.parse(new Date());
+                        const seconds = Math.floor( (total/1000) % 60 );
+                        const minutes = Math.floor( (total/1000/60) % 60 );
+                        const hours = Math.floor( (total/(1000*60*60)) % 24 );
+
+                        return {
+                            total,
+                            hours,
+                            minutes,
+                            seconds
+                        };
+                    }
+
+                    function initializeClock(id, endtime) {
+                        const clock = document.getElementById(id);
+                        const hoursSpan = clock.querySelector('.hours');
+                        const minutesSpan = clock.querySelector('.minutes');
+                        const secondsSpan = clock.querySelector('.seconds');
+
+                        function updateClock(){
+                            const t = getTimeRemaining(endtime);
+                            hoursSpan.innerHTML = ('00' + t.hours).slice(-2);
+                            minutesSpan.innerHTML = ('00' + t.minutes).slice(-2);
+                            secondsSpan.innerHTML = ('00' + t.seconds).slice(-2);
+
+                            if (t.total == 120000) {
+                                var modal = document.getElementById("time_modal");
+                                var span = document.getElementsByClassName("close")[0];
+                                var okay_modal = document.getElementById("time_modal_okay_button");
+
+                                modal.style.display = "block";
+
+                                okay_modal.onclick = function() {
+                                    modal.style.display = "none";
+                                }
+
+                                span.onclick = function() {
+                                    modal.style.display = "none";
+                                }
+
+                                window.onclick = function(event) {
+                                    if (event.target == modal) {
+                                        modal.style.display = "none";
+                                    }
+                                }
+                            }
+
+                            if (t.total <= 0) {
+                                clearInterval(timeinterval);
+                                hoursSpan.innerHTML = '00';
+                                minutesSpan.innerHTML = '00';
+                                secondsSpan.innerHTML = '00';
+
+                                window.location.replace("/assignment/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}");
+                            }
+                        }
+
+                        updateClock(); // run function once at first to avoid delay
+                        var timeinterval = setInterval(updateClock, 1000);
+
+                    }
+                    
+                    
+
+                </script>
+            {% end %}
+
+            {% if assignment_details["has_timer"] and not is_administrator and not is_instructor and not is_assistant %}
+                <div id="clockdiv">
+                    <div>
+                        <span class="hours"></span>
+                        <div class="smalltext">Hours</div>
+                    </div>
+                    <div>
+                        <span class="minutes"></span>
+                        <div class="smalltext">Minutes</div>
+                    </div>
+                    <div>
+                        <span class="seconds"></span>
+                        <div class="smalltext">Seconds</div>
+                    </div>
+                </div>
+                <br /><br />
+
+                <script>startTimer();</script>
+            {% end %}
+
+            {% if assignment_details["due_date"] and assignment_details["due_date_passed"] and assignment_details["view_answer_late"] %}
+                <div class='notification is-warning is-light'>The due date for this assignment has passed, but your instructor has enabled viewing the answer.</div>
+            {% end %}
+
+            {% if assignment_details["due_date"] and assignment_details["due_date_passed"] and assignment_details["allow_late"] %}
+                <div class='notification is-warning is-light'>The due date for this assignment has passed, but you can make late submissions for {{ round(assignment_details["late_percent"] * 100) }}% of the points.</div>
+            {% end %}
+
+            {% if is_administrator or is_instructor or is_assistant %}
+                <div class="buttons">
+                    <a class="button is-dark" href="/edit_exercise/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}">Edit exercise</a>
+                </div>
+            {% end %}
+
+            
+
+            <div id="llm-grid">
+
+                <div id="exercise-col">
+                    <div class="instructions">
+                        <div id="instructions">
+                            {{ exercise_details["instructions"] }}
+                            
+                            {% if "previous_submission_code" in exercise_details %}
+                                <p><a class="button is-primary is-outlined" onclick="copy_code_from_previous_exercise()">Copy code from previous exercise</a></p>
+                            {% end %}
+                        </div>
+
+                        {% if exercise_basics["enable_pair_programming"] %}
+                            <hr>
+                            <p><i style='margin: 0 .5em;' class="fab fa-product-hunt"></i><em>Pair programming is enabled for this exercise.</em></p>
+                        {% end %}
+                    </div>
+
+                    {% if len(exercise_details["data_files"]) > 0 %}
+                        <div id="data_file_div" class="top-space">
+                        <h6>Data files:</h6>
+
+                        {% for data_file_index in range(len(exercise_details["data_files"])) %}
+                            <p>
+                                <!--File name-->
+                                <a class="is-family-monospace is-size-5" href="/download_file/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}/{{ sorted(list(exercise_details['data_files'].keys()))[data_file_index] }}">{{ sorted(list(exercise_details["data_files"].keys()))[data_file_index] }}</a>
+
+                                <!--Toggle button-->
+                                <a class="button is-white" id="data_button_{{ data_file_index }}" onclick="showHideData('data_panel_{{ data_file_index }}', 'data_button_{{ data_file_index }}')">Show</a>
+
+                                <!--File contents-->
+                                <pre id="data_panel_{{ data_file_index }}" hidden>
+                                    {{ exercise_details["data_files"][sorted(list(exercise_details["data_files"].keys()))[data_file_index]].rstrip("\n") }}
+                                </pre>
+                            </p>
+                        {% end %}
+                        </div>
+                    {% end %}
+
+                    {% if exercise_details["hint"] != "" %}
+                        <div class="top-space">
+                            <button id="hint_button" class="button is-warning" onclick="showHideHint()">Show hint</button>
+                        </div>
+
+                        <div id="hint_text" class="is-hidden hint-text"><p style="margin-top: 10px;">{{ exercise_details["hint"] }}</p></div>
+                    {% end %}
+
+                    <p class="top-space" id="user_code_area">
+                        <textarea class="textarea is-fullwidth monospace" rows="15" id="user_code">{% if exercise_details["starter_code"] and len(submissions) == 0 %}{{ exercise_details["starter_code"] }}{% end %}</textarea>
+                        <!--
+                        {% if assignment_details["enable_help_requests"] %}
+                            <div class="buttons is-pulled-right">
+                                {% if help_request %}
+                                    {% if help_request["more_info_needed"] %}
+                                        <a class="button is-danger is-light" onclick="showHelpRequestModal()">More info needed</a>
+                                    {% elif same_suggestion %}
+                                        <a class="button is-success is-light" onclick="showMatchingModal()">Matching suggestion</a>
+                                    {% elif help_request["approved"] %}
+                                        <a class="button is-primary" onclick="showSuggestionModal()">View suggestion</a>
+                                    {% else %}
+                                        <a class="button is-warning is-light" onclick="showSuggestionModal()">Request pending</a>
+                                    {% end %}
+                                {% else %}
+                                    <a class="button is-white" onclick="showHelpRequestModal()">Request help</a>
+                                {% end %}
+                            </div>
+                        {% end %}
+                        -->
+                    </p>
+                </div>
+
+                <!-- LLM Chat Window -->
+                <div id="llm-col">
+
+                    <div id="chat-window">
+                        <div id="chat-name">CodeBuddy</div>
+                        <div id="chat-history"></div>
+                        
+                        <textarea id="chat-input"></textarea>
+
+                        <div id="chat-submit">
+                            <button class="button is-dark" onclick="submit_to_llm()">Submit</button>
+                        </div>
+                    </div>
+                    <button class="button" onclick="next_line_of_code_llm()">What's the next line?</button>
+                    <button class="button" onclick="hint_llm()">Give me a hint</button>
+                </div>
+
+
+            </div>
+
+            <div id="saved_div" class="ml-0 mt-0 mr-2 is-pulled-right mt-0 smaller-font"></div>
+
+            <div class="smaller-font is-pulled-right mt-0 mr-1"><em>{{ exercise_basics["title"] }}</em></div>
+
+            <div class="buttons">
+                <a class="button is-medium is-dark" id='submit_button'>Submit</a>
+
+                {% if exercise_details["back_end"] != "not_code" and not exercise_details["allow_any_response"] %}
+                    <a class="button is-medium is-primary is-outlined" onclick='run_code(true)' id='run_button'>Run</a>
+                {% end %}
+
+                {% if exercise_details["allow_any_response"] or exercise_details["back_end"] == "not_code" %}
+                    <p class="is-primary has-tooltip-multiline has-tooltip-right" data-tooltip="After you have entered your response, click on 'Submit'." />
+                {% else %}
+                    <p class="is-primary has-tooltip-multiline has-tooltip-right" data-tooltip="When you are ready to test your solution against the expected output, click on 'Submit'. If you would like to see the output of your solution without officially submitting it, click on 'Run'. If you highlight a section of code and hit the Tab button, it will indent all lines of code in the block. If you hit Shift-Tab, it will reduce the indentation. There is also an option for commenting sections of code. To do this, highlight the code you wish to comment; then enter Command + / (Mac) or Control + / (Windows) to comment the code. If it is already commented, this will uncomment the code." />
+                {% end %}
+
+                <span class="icon mt-0">
+                    <i class="far fa-question-circle fa-1x"></i>
+                </span>
+            </div>
+
+            <div id="max_submissions_message"></div>
+
+            {% if assignment_details["due_date"] and assignment_details["due_date_passed"] %}
+                {% if not assignment_details["allow_late"] %}
+                    <script>
+                        document.getElementById("submit_button").disabled = true;
+                    </script>
+                {% end %}
+
+                {% if assignment_details["view_answer_late"] %}
+                    <div class='notification is-warning'>
+                        <p>Click <a style='color:#2166ac' href="/view_instructor_solution/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}">here</a> to view the instructor's solution.
+                        </p>
+                    </div>
+                {% end %}
+            {% end %}
+
+            <p id="test_outputs"></p>
+
+            <p id="result_message"></p>
+
+            <p id="submissions"></p>
+
+            {% if len(exercise_details["credit"]) > 0 %}
+                <div class="front-row-container">
+                    <p style="padding-right: 5px;"><em>Credit: </em></p>
+                    <p><em>{{ exercise_details["credit"] }}</em></p>
+                </div>
+            {% end %}
+
+            <div class="buttons">
+                {% if prev_exercise %}
+                    <a class="button is-outlined" href="/exercise/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ prev_exercise['id'] }}">Previous exercise</a>
+                {% end %}
+
+                {% if next_exercise %}
+                    <a class="button is-outlined" href="/exercise/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ next_exercise['id'] }}">Next exercise</a>
+                {% end %}
+
+                <!--<button class="button is-light is-pulled-right" onclick="showLinkModal()">Share</button>-->
+            </div>
+
+            <div id="submit_exercise_modal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h6 style="display:inline">Pair programming:</h6>
+                    <label class="has-tooltip-multiline has-tooltip-right" data-tooltip="If using pair programming for this exercise, enter the name of your partner here.">
+                        <i class="far fa-question-circle"></i>
+                    </label><br />
+
+                    <div id="submit_exercise_modal_message"></div>
+
+                    <div id="partner_selection">
+                        <p>Select your pair programming partner here. If you are working on the exercise without a partner, leave this field blank.</p>
+                        {% if users %}
+                            <input class="space_div input is-primary" list="users_list" id="partner_name" placeholder="Enter partner's name here...">
+                            <datalist id="users_list">
+                                {% for user_name in users %}
+                                    <option value="{{ user_name }}"></option>
+                                {% end %}
+                            </datalist>
+                        {% else %}
+                            <p>There are no other registered students in this course, so your only option is to leave this field blank.</p>
+                        {% end %}
+
+                        <input type="hidden" id="partner_id" />
+                    </div>
+
+                    <p class="buttons">
+                        <a id="submit_cancel_button" class="modal-button button is-light">Cancel</a>
+                        <a id="modal_submit_button" class="modal-button button is-dark">Submit</a>
+                    </p>
+                </div>
+            </div>
+
+            <div id="time_modal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <p>You have less than 2 minutes remaining. If you are still working, submit a solution to avoid losing your work.</p>
+                    <p><button class="button is-dark" id="time_modal_okay_button">Okay</button></p>
+                </div>
+            </div>
+
+            <!--<div id="share_modal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <p>Share this link with an instructor or assistant:</p>
+                    <input class="input is-medium is-primary" type="text" id="share_link" value="https://{{ domain }}/student_exercise/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}/{{ user_info['user_id'] }}" readonly>
+                    <button class="modal-button button is-dark" onclick="copyLink()">Copy Link</button>
+                </div>
+            </div>-->
+
+            <!--<div id="help_request_modal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    {% if help_request and help_request["more_info_needed"] %}
+                        <p><strong>An instructor or assistant has requested more info from you about your help request.</strong></p>
+                        {% if help_request["suggestion"] %}
+                            <p>Comment made by your instructor/assistant:<br />
+                            <span class="green-text">{{ help_request["suggestion"] }}</span></p>
+                        {% end %}
+                        <p>Please update your comment to help us better understand what you need help with:</p>
+                    {% else %}
+                        <p><strong>Submit a help request so an instructor or assistant can review your code/output and make a suggestion.</strong></p>
+                        <p>Please write a comment to help us better understand what you need help with:</p>
+                    {% end %}
+                    <textarea class="textarea is-primary is-fullwidth monospace" id="student_comment" name="student_comment">{% if help_request and help_request["more_info_needed"] %}{{ help_request["student_comment"] }}{% end %}</textarea>
+                    <p class="buttons">
+                        <a id="cancel_request_button" class="modal-button button is-light">Cancel</a>
+                        <a id="submit_request_button" class="modal-button button is-dark">Submit</a>
+                    </p>
+                </div>
+            </div>
+
+            <div id="matching_modal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <p><strong>A student in this class previously submitted a help request with the same output as your request. The instructor/assistant made this suggestion:</strong></p>
+                    <span class="green-text">{{ same_suggestion }}</span></p>
+                    <p>If this suggestion is helpful, do you want to cancel your own request?</p>
+                    <p class="buttons">
+                        <a id="delete_request_button" class="modal-button button is-light">Cancel request</a>
+                        <a id="keep_request_button" class="modal-button button is-dark">Keep request</a>
+                    </p>
+                </div>
+            </div>
+
+            <div id="suggestion_modal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <p>Your comment from the help request:</p>
+                    <textarea class="textarea is-primary monospace text-18" rows="3">{% if help_request and help_request["student_comment"] %}{{ help_request["student_comment"] }}{% end %}</textarea>
+                    <br><p>Instructor's suggestion:</p>
+                    <textarea class="textarea is-primary monospace text-18" rows="3">{% if help_request and help_request["suggestion"] %}{{ help_request["suggestion"] }}{% else %}No suggestion has been made yet.{% end %}</textarea>
+                </div>
+            </div>-->
+            <script src="/static/env.js"></script>
+            <script>
+
+
+                //let template_system_message = "You are a programming tutor. Your answers are short and simple, around 1-5 sentences. The students code is '[[code]]'"
+                let template_system_message = "You are a programming tutor. Your answers are short and simple, around 1-5 sentences."
+                
+                let initial_system_message = template_system_message.replace("[[code]]", "")
+                let llm_messages = [{ "role": "system", "content": "You are a programming tutor. Your answers are short and simple, around 1-5 sentences." }]
+
+                function submit_to_llm() {
+
+                    if ($("#chat-input").val() == "") return;
+
+                    console.log("Contacting LLM")
+
+                    console.log("{{course_basics['id']}}")
+
+                    let chat_input = $("#chat-input").val();
+                    $("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="user-message">${chat_input}</div>`);
+
+                    $("#chat-input").val("");
+
+                    $.ajax({
+                        type: 'POST',
+                        url: "/llm_chat/chat/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
+                        data: {"chat_input": chat_input},
+                        async: true
+                    }).done(result => {                        
+                        let response_message = result
+
+                        // Update html to match
+                        $("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="llm-message">${response_message}</div>`);
+
+                    })
+
+
+                    return;
+
+
+                }
+
+                function hint_llm() {
+                    
+                    let user_code = get_user_code();
+
+                    $.ajax({
+                        type: 'POST',
+                        url: "/llm_chat/natural_hint/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
+                        data: {"user code": user_code},
+                        async: true
+                    }).done(result => {
+                        console.log(result)
+
+                        //llm_messages.push(response_message)
+
+                        // Update html to match
+                        $("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="llm-message">${result}</div>`);
+
+                    })
+
+                }
+
+                function next_line_of_code_llm() {
+
+                    let user_code = get_user_code()
+
+                    $.ajax({
+                        type: 'POST',
+                        url: "/llm_chat/next_line/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
+                        data: { "user code": user_code },
+                        async: true
+                    }).done(result => {
+                        console.log(result)
+
+                        //llm_messages.push(response_message)
+
+                        // Update html to match
+                        $("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="llm-message">${result}</div>`);
+
+                    })
+
+                }
+            </script>
+
+            <script>
+                ace.require("ace/ext/language_tools");
+
+                var editor = ace.edit("user_code", {
+                    theme: "ace/theme/{{ user_info['ace_theme'] }}",
+                    autoScrollEditorIntoView: false,
+                    minLines: 20,
+                    fontSize: "12pt"
+                });
+
+                editor.setHighlightActiveLine(false);
+                editor.setShowPrintMargin(false);
+
+                {% if user_info['enable_vim'] %}
+                   editor.setKeyboardHandler("ace/keyboard/vim");
+                {% end %}
+
+                {% if exercise_details["back_end"] == "not_code" %}
+                    editor.session.setUseWrapMode(true);
+                {% else %}
+                    {% if user_info["use_auto_complete"] %}
+                        editor.setOptions({
+                            enableBasicAutocompletion: false,
+                            enableSnippets: true,
+                            enableLiveAutocompletion: true
+                        });
+                    {% end %}
+                {% end %}
+
+                editor.focus();
+                editor.getSession().setMode("{{ code_completion_path }}");
+
+                submitButton = document.getElementById("submit_button");
+
+                {% if exercise_details["enable_pair_programming"] %}
+                      if (submitButton != null)
+                          submitButton.onclick = function() {
+                              showSubmitModal()
+                      }
+                {% else %}
+                    if (submitButton != null) {
+                        submitButton.onclick = function() {
+                            if (submitButton.disabled)
+                                showErrorMessage("You are not allowed to make a submission because the due date has passed.");
+                            else
+                                submit()
+                        }
+                    }
+                {% end %}
+
+                const tests = {{ jsonify(tests) }};
+
+                var submissions = {{ jsonify(submissions) }};
+                var presubmission = {{ jsonify(presubmission) }};
+
+                show_past_submissions();
+
+                if (submissions.length == 0) {
+                    showTestOutputs(null, false);
+
+                    if (presubmission) {
+                        editor.focus();
+                        editor.setValue(presubmission, 1);
+                    }
+                }
+                else {
+                    var latest_submission = submissions[submissions.length - 1];
+
+                    // Set editor value to presubmission if the presubmission is different than the latest submission code.
+                    if (presubmission && presubmission != latest_submission.code) {
+                        editor.focus();
+                        editor.setValue(presubmission, 1);
+                    }
+                    else {
+                        get_submission(latest_submission.id, false, true);
+                    }
+                }
+
+                let codeChanged = false;
+                window.wasUserChange = true;
+
+                // editor.session.on('change', function(delta) {
+                editor.on('change', function() {
+                    if (window.wasUserChange){
+                        codeChanged = true;
+                        saved_div.innerHTML = `<span class="icon mt-0 ml-1">
+                            <i class="far fa-save fa-2x" style="cursor: pointer;"  onclick="save_presubmission();editor.focus();"></i>
+                        </span>`;
+                    }
+                });
+
+                // Autosave if code has changed
+                setInterval(function() {
+                    if (codeChanged) {
+                        save_presubmission();
+                    }
+                }, 60000);
+
+                {% if check_for_restrict_other_assignments %}
+                    setInterval(isTakingRestrictedAssignment, 60000);
+                {% end %}
+            </script>
+        {% else %}
+            <p>This exercise does not exist.</p>
+        {% end %}
+    {% else %}
+        <p>This assignment does not exist.</p>
+    {% end %}
+{% else %}
+    <p>This course does not exist.</p>
+{% end %}

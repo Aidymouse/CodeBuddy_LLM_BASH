@@ -38,12 +38,13 @@ CodeBuddy can be installed on any system that supports Docker and Python. Here a
 2. Install [Python](https://www.python.org/downloads) (version 3.9+) and the [pip package manager](https://pip.pypa.io/en/stable/installation).
 3. In the terminal, execute the following command to install the Python packages: `pip install -r front_end/requirements.txt`.
 4. Modify Settings.yaml according to your preferences. The default settings should work in most cases.
-5. Create a text file in `front_end/secrets/front_end.yaml` that contains a password that you wish to use for encrypting cookies, as well as Google authentication tokens. (Google authentication is not supported currently, so you can just use the placeholder values shown below for now.)
+5. Create a text file in `front_end/secrets/front_end.yaml` that contains a password that you wish to use for encrypting cookies, as well as Google authentication tokens. (Google authentication is not supported currently, so you can just use the placeholder values shown below for now, but you will need an openai key to use the chatgpt features)
 
 ```
 cookie: "abcdefg"
 google_oauth_key: "123456789012-abc123a12aa12aaaa1aaaaa1aaaa1aa.apps.googleusercontent.com"
 google_oauth_secret: "ABCDEFGHIJKLMNOP"
+openai_api_key: "[[openai_key]]"
 ```
 
 If you would like to contribute to developing CodeBuddy, complete these additional steps.
@@ -70,7 +71,8 @@ For most users, the preferred option is to run the front end within Docker. To d
 1. Use the `cd` command to change your current working directory to `front_end`.
 2. Build the HTML files. Execute the following command. `make html`
 3. Build the `static` directory. Execute the following command. When it is done, hit Ctrl-C to move on. `make build-watch`
-4. Start the development server. Execute the following command. `make dev-server`
+
+5. Start the development server. Execute the following command. `make dev-server`
 
 When you modify files in the `front_end/templates` directory, you will need to re-run `make html`. When you change any of the Python code, you will need to hit Ctrl-C to stop the development server and then re-execute `make dev-server`.
 
