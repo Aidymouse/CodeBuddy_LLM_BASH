@@ -209,6 +209,7 @@
                     </div>
                     <button class="button" onclick="next_line_of_code_llm()">What's the next line?</button>
                     <button class="button" onclick="hint_llm()">Give me a hint</button>
+                    <button class="button" onclick="whats_useful_llm()">What's useful?</button>
                 </div>
 
 
@@ -411,6 +412,27 @@
 
                     return;
 
+
+                }
+
+                function whats_useful_llm() {
+                 
+                    let user_code = get_user_code();
+
+                    $.ajax({
+                        type: 'POST',
+                        url: "/llm_chat/whats_useful/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
+                        data: { "user code": user_code },
+                        async: true
+                    }).done(result => {
+                        console.log(result)
+
+                        //llm_messages.push(response_message)
+
+                        // Update html to match
+                        $("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="llm-message">${result}</div>`);
+
+                    })
 
                 }
 
