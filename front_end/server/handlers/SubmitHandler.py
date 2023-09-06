@@ -41,9 +41,11 @@ class SubmitHandler(BaseUserHandler):
                     out_dict["partner_name"] = self.content.get_user_info(partner_id)["name"]
 
                 sanitize_test_outputs(exercise_details, out_dict["test_outputs"])
+        
         except ConnectionError as inst:
             out_dict["message"] = "The front-end server was unable to contact the back-end server."
             out_dict["all_passed"] = False
+        
         except ReadTimeout as inst:
             out_dict["message"] = f"Your solution timed out after {self.settings_dict['back_ends'][exercise_details['back_end']]['timeout_seconds']} seconds."
             out_dict["all_passed"] = False

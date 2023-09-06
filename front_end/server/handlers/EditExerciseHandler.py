@@ -57,10 +57,13 @@ class EditExerciseHandler(BaseUserHandler):
                     results["message"] = result
             else:
                 results["message"] = "You must be an administrator or an instructor for this course to edit exercises."
+        
         except ConnectionError as inst:
             results["message"] = "The front-end server was unable to contact the back-end server."
+        
         except ReadTimeout as inst:
             results["message"] = "Your solution timed out when attempting to contact the back-end server."
+        
         except Exception as inst:
             results["message"] = traceback.format_exc()
 

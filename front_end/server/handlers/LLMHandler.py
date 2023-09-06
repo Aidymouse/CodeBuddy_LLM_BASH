@@ -16,6 +16,87 @@ class LLMHandler(BaseUserHandler):
         openai.api_key = self.application.settings["openai_api_key"];
     '''
 
+    async def get_solution_lines(self, course_id, assignment_id, exercise_id):
+        user_code = self.get_body_argument("user code")
+
+        course_basics = await self.get_course_basics(course_id)
+        assignment_basics = await self.get_assignment_basics(course_basics, assignment_id)
+        exercise_details = await self.get_exercise_details(course_basics, assignment_basics, exercise_id)
+
+        exercise_instructions = exercise_details["instructions"]
+
+
+        user_code_lines = user_code.split("\n")
+
+        line_index_start = -1
+        line_index_end = -1
+
+        try:
+
+            for i in range(len(user_code_lines)-1, -1, -1):
+                line = user_code_lines[i]
+                print(f"{i}. {line}")
+                
+                if line.strip() == "":
+                    continue
+
+                if line_index_end != 0 and line_index_start != -1:
+                    if line.strip()[0] != "#":
+                        break
+
+                if line.strip()[0] == "#" and line_index_end != -1:
+                    line_index_start = i
+                    
+
+                if line.strip()[0] == "#" and line_index_end == -1:
+                    line_index_end = i
+
+            if line_index_end == -1:
+                print("No comments!")
+                return ""
+            
+            if line_index_start == -1:
+                line_index_start = line_index_end
+
+            full_comment = user_code_lines[line_index_start:line_index_end+1]
+
+            print(full_comment)
+
+            prompt = " ".join([c.strip()[1:].strip() for c in full_comment])
+
+            print(prompt)
+
+            messages_from_comment = [{ "role": "user", "content": prompt }]
+
+            chat_completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages_from_comment)
+
+
+
+            # Get latest comment
+            return chat_completion.choices[0].message.content
+
+        except Exception as e:
+            print(e)
+            return ""
+
+        '''
+        message_text = f"The exercise is ${exercise_instructions}. The current code is \"{user_code}\". What is a reasonable next line of code?"
+        
+        messages = [{"role": "user", "content": message_text}]
+
+        try:
+            chat_completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
+        except Exception as e:
+            print(e)
+
+        self.application.messages.append(chat_completion.choices[0].message)
+
+        self.write(chat_completion.choices[0].message.content)
+        '''
+
+
+
+
     def chat_message(self):
         pass
 
@@ -73,14 +154,21 @@ class LLMHandler(BaseUserHandler):
 
         openai.api_key = self.application.settings["openai_api_key"]
         
-        if message_type == "chat":
+        print(f"Contacting LLM: {message_type}")
+
+        if message_type == "solution_lines":
+            user_code = await self.get_solution_lines(course_id, assignment_id, exercise_id)
+
+            self.write(user_code)
+
+        elif message_type == "chat":
             
             print(":::Chat Message:::")
 
             chat_input = self.get_body_argument("chat_input")
             print(f"Chat Message: {chat_input}")
 
-            self.application.messages.append({ "role": "user", "content": chat_input })
+            self.application.messages.append()
 
 
             try:

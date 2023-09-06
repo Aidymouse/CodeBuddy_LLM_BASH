@@ -33,6 +33,8 @@ def exec(info: ExecInfo):
     cpus = 1
     tmp_dir_path = None
 
+    print("OK!")
+
     # We specify the maximum characters to read. This avoids people bogging
     # down the server with really long outputs.
     MAX_OUTPUT_LENGTH = 100 * 1024

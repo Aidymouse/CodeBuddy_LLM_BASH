@@ -207,9 +207,11 @@
                             <button class="button is-dark" onclick="submit_to_llm()">Submit</button>
                         </div>
                     </div>
-                    <button class="button" onclick="next_line_of_code_llm()">What's the next line?</button>
-                    <button class="button" onclick="hint_llm()">Give me a hint</button>
-                    <button class="button" onclick="whats_useful_llm()">What's useful?</button>
+
+                    <button class="button" onclick="get_solution_by_lines()">Find Solution by Lines</button>
+                    
+                    <button class="button" onclick="hint_llm()">Find Solution</button>
+                    <!--<button class="button" onclick="whats_useful_llm()">What's useful?</button>-->
                 </div>
 
 
@@ -382,6 +384,35 @@
                 
                 let initial_system_message = template_system_message.replace("[[code]]", "")
                 let llm_messages = [{ "role": "system", "content": "You are a programming tutor. Your answers are short and simple, around 1-5 sentences." }]
+
+                let solution_lines = [];
+
+                function get_solution_by_lines() {
+                    
+                    let user_code = get_user_code();
+
+                    $.ajax({
+                        
+                        type: 'POST',
+                        url: "/llm_chat/solution_lines/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
+                        data: {"user code": user_code},
+                        async: true
+
+                    }).done(result => {
+
+                        //solution_lines = result
+
+                        console.log(result);
+
+                    })
+
+                }
+
+                function show_another_line() {
+
+                }
+
+
 
                 function submit_to_llm() {
 

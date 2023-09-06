@@ -10,6 +10,7 @@ mkdir -p "$database_dir_path"
 
 #docker run -i -t \
 docker run -d \
+            -a stderr \
            -p 127.0.0.1:${database_port}:3306 \
            --name "$container_name" \
            -v "$database_dir_path":/var/lib/mysql \
