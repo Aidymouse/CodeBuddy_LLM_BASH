@@ -35,56 +35,59 @@ class LLMHandler(BaseUserHandler):
 
         try:
 
-            # Get latest comment
+            # Get latest contiguous block of comments that start with designated comment character
+
             for i in range(len(user_code_lines)-1, -1, -1):
                 line = user_code_lines[i]
-                print(f"{i}. {line}")
                 
-                if line.strip() == "":
-                    continue
+                # Does line start with comment character?
+                if line.strip()[:len(COMMENT_CHAR)] == COMMENT_CHAR:
+                    print(f"{i}. {line}")
 
-                if line_index_end != 0 and line_index_start != -1:
-                    if line.strip()[:len(COMMENT_CHAR)] != COMMENT_CHAR:
+                    if line_index_end != -1:
+                        line_index_start = i
                         break
+                    else:
+                        line_index_end = i
 
-                if line.strip()[:len(COMMENT_CHAR)] == COMMENT_CHAR and line_index_end != -1:
-                    line_index_start = i
-                    
-
-                if line.strip()[:len(COMMENT_CHAR)] == COMMENT_CHAR and line_index_end == -1:
-                    line_index_end = i
 
             if line_index_end == -1:
                 print("No comments!")
-                return ""
+                return {
+                    "full_solution": "",
+                    "lines": [],
+                    "initial_indent": "",
+                    "reason": "no comments"
+                }
             
             if line_index_start == -1:
                 line_index_start = line_index_end
 
             full_comment = user_code_lines[line_index_start:line_index_end+1]
 
-            print(full_comment)
-
             # Turn comment into prompt for the model
-            prompt = " ".join([c.strip()[len(COMMENT_CHAR):].strip() for c in full_comment])
+            comments = " ".join([c.strip()[len(COMMENT_CHAR):].strip() for c in full_comment])
 
-            print(prompt)
+            template_system_message = "You write C programs. You only provide code. You write at most one function, including main."
 
-            template_system_message = "You write C programs. You only provide code. You write at most one function."
+            prompt = template_system_message + " " + comments
 
-            messages_from_comment = [{"role": "system", "content": template_system_message}, { "role": "user", "content": prompt }]
+            print(f"Asking: {prompt}")
+
+            messages_from_comment = [{"role": "user", "content": prompt}]
 
             chat_completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages_from_comment)
 
             message = chat_completion.choices[0].message.content
-            print(message)
+            print(f"Response: {message}")
 
             initial_indent = full_comment[0].split(COMMENT_CHAR)[0]
 
             return {
-                "text": message.split("```")[1],
+                "full_solution": message.split("```")[1],
                 "lines": message.split("```")[1].split("\n")[1:],
-                "initial_indent": initial_indent
+                "initial_indent": initial_indent,
+                "reason": ""
             }
 
         except Exception as e:

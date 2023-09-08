@@ -197,21 +197,10 @@
                 <!-- LLM Chat Window -->
                 <div id="llm-col">
 
-                    <div id="chat-window">
-                        <div id="chat-name">CodeBuddy</div>
-                        <div id="chat-history"></div>
-                        
-                        <textarea id="chat-input"></textarea>
-
-                        <div id="chat-submit">
-                            <button class="button is-dark" onclick="submit_to_llm()">Submit</button>
-                        </div>
-                    </div>
-
-                    <button class="button" onclick="get_solution_by_lines()">Find Solution by Lines</button>
-                    <button class="button" id="next-line-button" disabled="true" onclick="show_next_line()">Show Next Line</button>
+                    <button class="button" id="lines-solution-button" onclick="get_solution_by_lines()">Find<br>Solution<br>by Lines</button>
+                    <button class="button" id="next-line-button" disabled="true" onclick="show_next_line()">Show<br>Next Line</button>
                     
-                    <button class="button" onclick="hint_llm()">Find Solution</button>
+                    <button class="button" id="full-solution-button" onclick="get_whole_solution()">Find<br>Solution</button>
                     <!--<button class="button" onclick="whats_useful_llm()">What's useful?</button>-->
                 </div>
 
@@ -497,11 +486,51 @@
 
                 function get_whole_solution() {
 
+                    let user_code = get_user_code();
+                    let init_button_text = $("#full-solution-button")[0].innerHTML 
+                    $("#full-solution-button")[0].innerHTML = '<img class="llm-button-loader" src="/static/spin-load.gif">';
+
+                    $.ajax({
+
+                        type: 'POST',
+                        url: "/llm_chat/solution_lines/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
+                        data: { "user code": user_code },
+                        async: true
+
+
+                    }).done(result => {
+                        
+                        hideInfoMessage();
+                        
+                        if (result.reason == "no comments") {
+                            showInfoMessage("Could not find comment");
+                            $("#full-solution-button")[0].innerHTML = init_button_text;
+                            return;
+                        }
+
+
+                        let new_editor_value = editor.getValue()
+                        result.lines.forEach(line => {
+                            new_editor_value += "\n" + line;
+                        })
+                        
+                        editor.setValue( new_editor_value );
+                        editor.clearSelection();
+                        
+                        $("#full-solution-button")[0].innerHTML = init_button_text;
+                    })
+
+
+
                 }
 
                 function get_solution_by_lines() {
 
                     let user_code = get_user_code();
+                    let init_button_html = $("#lines-solution-button")[0].innerHTML
+                    
+                    $("#lines-solution-button")[0].innerHTML = '<img class="llm-button-loader" src="/static/spin-load.gif">';
+
 
                     $.ajax({
 
@@ -514,13 +543,26 @@
 
                         //solution_lines = result
 
+                        hideInfoMessage();
+                        
+                        if (result.reason == "no comments") {
+                            showInfoMessage("Could not find comment");
+                            console.log(init_button_html);
+                            $("#lines-solution-button")[0].innerHTML = init_button_html;
+                            return;
+                        }
+                        
+                        
                         console.log(result);
 
                         solution_lines = result.lines;
                         lines_index = 0;
                         indent = result.initial_indent;
 
+                        $("#lines-solution-button")[0].innerHTML = init_button_html;
+
                         $("#next-line-button").attr("disabled", false);
+                        show_next_line();
                     })
 
 

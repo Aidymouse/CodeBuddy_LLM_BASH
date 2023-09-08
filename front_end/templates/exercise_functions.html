@@ -172,6 +172,10 @@ function showInfoMessage(message) {
     $("#result_message")[0].innerHTML = `<div class='notification is-dark'>${message}</div>`;
 }
 
+function hideInfoMessage() {
+    $("#result_message")[0].innerHTML = "";
+}
+
 function showTestOutputs(test_outputs, scroll) {
     var output = "";
 

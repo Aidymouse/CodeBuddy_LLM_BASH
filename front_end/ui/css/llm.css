@@ -7,9 +7,10 @@
 
 #llm-col {
     
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr 2em 2em 2em;
+
+
+    display: flex;
+    flex-direction: column;
     
     gap: 0.5em;
     
