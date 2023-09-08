@@ -31,8 +31,11 @@ class LLMHandler(BaseUserHandler):
         line_index_start = -1
         line_index_end = -1
 
+        COMMENT_CHAR = "//"
+
         try:
 
+            # Get latest comment
             for i in range(len(user_code_lines)-1, -1, -1):
                 line = user_code_lines[i]
                 print(f"{i}. {line}")
@@ -41,14 +44,14 @@ class LLMHandler(BaseUserHandler):
                     continue
 
                 if line_index_end != 0 and line_index_start != -1:
-                    if line.strip()[0] != "#":
+                    if line.strip()[:len(COMMENT_CHAR)] != COMMENT_CHAR:
                         break
 
-                if line.strip()[0] == "#" and line_index_end != -1:
+                if line.strip()[:len(COMMENT_CHAR)] == COMMENT_CHAR and line_index_end != -1:
                     line_index_start = i
                     
 
-                if line.strip()[0] == "#" and line_index_end == -1:
+                if line.strip()[:len(COMMENT_CHAR)] == COMMENT_CHAR and line_index_end == -1:
                     line_index_end = i
 
             if line_index_end == -1:
@@ -62,18 +65,27 @@ class LLMHandler(BaseUserHandler):
 
             print(full_comment)
 
-            prompt = " ".join([c.strip()[1:].strip() for c in full_comment])
+            # Turn comment into prompt for the model
+            prompt = " ".join([c.strip()[len(COMMENT_CHAR):].strip() for c in full_comment])
 
             print(prompt)
 
-            messages_from_comment = [{ "role": "user", "content": prompt }]
+            template_system_message = "You write C programs. You only provide code. You write at most one function."
+
+            messages_from_comment = [{"role": "system", "content": template_system_message}, { "role": "user", "content": prompt }]
 
             chat_completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages_from_comment)
 
+            message = chat_completion.choices[0].message.content
+            print(message)
 
+            initial_indent = full_comment[0].split(COMMENT_CHAR)[0]
 
-            # Get latest comment
-            return chat_completion.choices[0].message.content
+            return {
+                "text": message.split("```")[1],
+                "lines": message.split("```")[1].split("\n")[1:],
+                "initial_indent": initial_indent
+            }
 
         except Exception as e:
             print(e)

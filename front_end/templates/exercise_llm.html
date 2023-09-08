@@ -209,6 +209,7 @@
                     </div>
 
                     <button class="button" onclick="get_solution_by_lines()">Find Solution by Lines</button>
+                    <button class="button" id="next-line-button" disabled="true" onclick="show_next_line()">Show Next Line</button>
                     
                     <button class="button" onclick="hint_llm()">Find Solution</button>
                     <!--<button class="button" onclick="whats_useful_llm()">What's useful?</button>-->
@@ -375,141 +376,8 @@
                     <textarea class="textarea is-primary monospace text-18" rows="3">{% if help_request and help_request["suggestion"] %}{{ help_request["suggestion"] }}{% else %}No suggestion has been made yet.{% end %}</textarea>
                 </div>
             </div>-->
-            <script src="/static/env.js"></script>
-            <script>
-
-
-                //let template_system_message = "You are a programming tutor. Your answers are short and simple, around 1-5 sentences. The students code is '[[code]]'"
-                let template_system_message = "You are a programming tutor. Your answers are short and simple, around 1-5 sentences."
-                
-                let initial_system_message = template_system_message.replace("[[code]]", "")
-                let llm_messages = [{ "role": "system", "content": "You are a programming tutor. Your answers are short and simple, around 1-5 sentences." }]
-
-                let solution_lines = [];
-
-                function get_solution_by_lines() {
-                    
-                    let user_code = get_user_code();
-
-                    $.ajax({
-                        
-                        type: 'POST',
-                        url: "/llm_chat/solution_lines/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
-                        data: {"user code": user_code},
-                        async: true
-
-                    }).done(result => {
-
-                        //solution_lines = result
-
-                        console.log(result);
-
-                    })
-
-                }
-
-                function show_another_line() {
-
-                }
-
-
-
-                function submit_to_llm() {
-
-                    if ($("#chat-input").val() == "") return;
-
-                    console.log("Contacting LLM")
-
-                    console.log("{{course_basics['id']}}")
-
-                    let chat_input = $("#chat-input").val();
-                    $("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="user-message">${chat_input}</div>`);
-
-                    $("#chat-input").val("");
-
-                    $.ajax({
-                        type: 'POST',
-                        url: "/llm_chat/chat/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
-                        data: {"chat_input": chat_input},
-                        async: true
-                    }).done(result => {                        
-                        let response_message = result
-
-                        // Update html to match
-                        $("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="llm-message">${response_message}</div>`);
-
-                    })
-
-
-                    return;
-
-
-                }
-
-                function whats_useful_llm() {
-                 
-                    let user_code = get_user_code();
-
-                    $.ajax({
-                        type: 'POST',
-                        url: "/llm_chat/whats_useful/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
-                        data: { "user code": user_code },
-                        async: true
-                    }).done(result => {
-                        console.log(result)
-
-                        //llm_messages.push(response_message)
-
-                        // Update html to match
-                        $("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="llm-message">${result}</div>`);
-
-                    })
-
-                }
-
-                function hint_llm() {
-                    
-                    let user_code = get_user_code();
-
-                    $.ajax({
-                        type: 'POST',
-                        url: "/llm_chat/natural_hint/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
-                        data: {"user code": user_code},
-                        async: true
-                    }).done(result => {
-                        console.log(result)
-
-                        //llm_messages.push(response_message)
-
-                        // Update html to match
-                        $("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="llm-message">${result}</div>`);
-
-                    })
-
-                }
-
-                function next_line_of_code_llm() {
-
-                    let user_code = get_user_code()
-
-                    $.ajax({
-                        type: 'POST',
-                        url: "/llm_chat/next_line/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
-                        data: { "user code": user_code },
-                        async: true
-                    }).done(result => {
-                        console.log(result)
-
-                        //llm_messages.push(response_message)
-
-                        // Update html to match
-                        $("#chat-history").html($("#chat-history").html() + `<div class="chat-message" id="llm-message">${result}</div>`);
-
-                    })
-
-                }
-            </script>
-
+            
+            <!-- Ace Editor Scripts -->
             <script>
                 ace.require("ace/ext/language_tools");
 
@@ -611,6 +479,87 @@
                 {% if check_for_restrict_other_assignments %}
                     setInterval(isTakingRestrictedAssignment, 60000);
                 {% end %}
+            </script>
+
+            <!-- LLM Functions -->
+            <script>
+
+
+                //let template_system_message = "You are a programming tutor. Your answers are short and simple, around 1-5 sentences. The students code is '[[code]]'"
+                let template_system_message = "You are a programming tutor. Your answers are short and simple, around 1-5 sentences."
+
+                let initial_system_message = template_system_message.replace("[[code]]", "")
+                let llm_messages = [{ "role": "system", "content": "You are a programming tutor. Your answers are short and simple, around 1-5 sentences." }]
+
+                let solution_lines = [];
+                let lines_index = 0;
+                let indent = "";
+
+                function get_whole_solution() {
+
+                }
+
+                function get_solution_by_lines() {
+
+                    let user_code = get_user_code();
+
+                    $.ajax({
+
+                        type: 'POST',
+                        url: "/llm_chat/solution_lines/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
+                        data: { "user code": user_code },
+                        async: true
+
+                    }).done(result => {
+
+                        //solution_lines = result
+
+                        console.log(result);
+
+                        solution_lines = result.lines;
+                        lines_index = 0;
+                        indent = result.initial_indent;
+
+                        $("#next-line-button").attr("disabled", false);
+                    })
+
+
+                }
+
+                function show_next_line() {
+
+                    let next_line = solution_lines[lines_index]
+                    lines_index += 1
+                    
+                    
+                    // If the line is only whitespace, give it and the next non whitespace line
+                    /*
+                    let next_line_output = next_line
+                    while (next_line.trim() === "") {
+                        lines_index += 1
+                        let next_line = solution_lines[lines_index]
+                        next_line_output += "\n" + next_line
+                    }
+                    */
+                    
+                    console.log(next_line)
+
+                    let cur_editor_text = editor.getValue()
+                    
+                    editor.setValue( cur_editor_text + "\n" + indent + next_line )
+                    editor.clearSelection();
+                    
+                    if (lines_index == solution_lines.length-1) {
+                        solution_lines = [];
+                        lines_index = 0;
+
+                        $("#next-line-button").attr("disabled", true);
+                    }
+
+
+                }
+
+
             </script>
         {% else %}
             <p>This exercise does not exist.</p>
