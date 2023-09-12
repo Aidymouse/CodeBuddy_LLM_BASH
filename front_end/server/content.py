@@ -2008,6 +2008,19 @@ class Content:
 
         # return submission_id
 
+    def save_llm_generation(self, course_id, assignment_id, exercise_id, user_id, comment, generated_code, llm_interaction_type):
+        sql = '''INSERT INTO llm_generations (course_id, assignment_id, exercise_id, user_id, comment, generated_code, llm_interaction_type, lines_used_before_edit, date_created)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'''
+        
+        llm_generation_id = self.execute(sql, (course_id, assignment_id, exercise_id, user_id, comment, generated_code, llm_interaction_type, 0, datetime.utcnow()) )
+
+        return llm_generation_id
+    
+    
+    
+    def update_llm_lines_used(self, llm_generation_id, course_id, assignment_id, exercise_id, user_id, lines_used_before_edit):
+        pass
+
     def save_help_request(self, course_id, assignment_id, exercise_id, user_id, code, txt_output, jpg_output, student_comment, date):
         sql = '''INSERT INTO help_requests (course_id, assignment_id, exercise_id, user_id, code, txt_output, jpg_output, student_comment, approved, date, more_info_needed)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'''

@@ -83,9 +83,14 @@ class LLMHandler(BaseUserHandler):
 
             initial_indent = full_comment[0].split(COMMENT_CHAR)[0]
 
+
+            full_solution = message.split("```")[1]
+
+            self.content.save_llm_generation(course_id, assignment_id, exercise_id, self.get_current_user(), comments, full_solution, exercise_details["llm_interaction_type"])
+
             return {
-                "full_solution": message.split("```")[1],
-                "lines": message.split("```")[1].split("\n")[1:],
+                "full_solution": full_solution,
+                "lines": full_solution.split("\n")[1:],
                 "initial_indent": initial_indent,
                 "reason": ""
             }
