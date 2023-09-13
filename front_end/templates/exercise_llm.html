@@ -373,6 +373,9 @@
             
             <!-- Ace Editor Scripts -->
             <script>
+                let ace_edited_by_llm_counter = 0;
+                let active_solution_id = -1;
+
                 ace.require("ace/ext/language_tools");
 
                 var editor = ace.edit("user_code", {
@@ -380,6 +383,27 @@
                     autoScrollEditorIntoView: false,
                     minLines: 20,
                     fontSize: "12pt"
+                });
+
+                editor.on("change", () => {
+
+                    if (ace_edited_by_llm_counter > 0) {
+                        ace_edited_by_llm_counter -= 1;
+                        return;   
+                    } else {
+                        // User has edited the panel
+
+                        // Reset the solution stuff
+                        $("#next-line-button").attr("disabled", true);
+                        if ( active_solution_id != -1 ) {
+
+                            update_llm_lines_used()
+
+                            active_solution_id = -1
+
+                        }
+
+                    }
                 });
 
                 editor.setHighlightActiveLine(false);
@@ -498,7 +522,7 @@
                     $.ajax({
 
                         type: 'POST',
-                        url: "/llm_chat/solution_lines/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
+                        url: "/llm/solution_lines/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
                         data: { "user code": user_code },
                         async: true
 
@@ -522,6 +546,7 @@
                         editor.setValue( new_editor_value );
                         editor.clearSelection();
                         
+
                         $("#full-solution-button")[0].innerHTML = init_button_text;
                     })
 
@@ -540,7 +565,7 @@
                     $.ajax({
 
                         type: 'POST',
-                        url: "/llm_chat/solution_lines/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
+                        url: "/llm/solution_lines/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
                         data: { "user code": user_code },
                         async: true
 
@@ -564,6 +589,8 @@
                         lines_index = 0;
                         indent = result.initial_indent;
 
+                        active_solution_id = result.llm_generation_id;
+
                         $("#lines-solution-button")[0].innerHTML = init_button_html;
 
                         $("#next-line-button").attr("disabled", false);
@@ -577,6 +604,9 @@
 
                     let next_line = solution_lines[lines_index]
                     lines_index += 1
+
+                    
+                    // TODO: detect when console has been edited
                     
                     
                     // If the line is only whitespace, give it and the next non whitespace line
@@ -590,13 +620,18 @@
                     */
                     
                     console.log(next_line)
+                    
+                    ace_edited_by_llm_counter = 2;
 
                     let cur_editor_text = editor.getValue()
-                    
+                   
                     editor.setValue( cur_editor_text + "\n" + indent + next_line )
                     editor.clearSelection();
                     
                     if (lines_index == solution_lines.length-1) {
+                        
+                        update_llm_lines_used()
+                        
                         solution_lines = [];
                         lines_index = 0;
 
@@ -604,6 +639,22 @@
                     }
 
 
+                }
+
+                function update_llm_lines_used() {
+                    $.ajax({
+                        type: 'POST',
+                        url: "/llm/update_lines_used/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}" ,
+                        data: {
+                            "llm_generation_id": active_solution_id,
+                            "lines_used": lines_index // not +1 for some reason??
+                        },
+                        async: true
+                    }).done(result => {
+
+
+
+                    })
                 }
 
 

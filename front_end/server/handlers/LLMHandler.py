@@ -16,6 +16,7 @@ class LLMHandler(BaseUserHandler):
         openai.api_key = self.application.settings["openai_api_key"];
     '''
 
+
     async def get_solution_lines(self, course_id, assignment_id, exercise_id):
         user_code = self.get_body_argument("user code")
 
@@ -24,7 +25,6 @@ class LLMHandler(BaseUserHandler):
         exercise_details = await self.get_exercise_details(course_basics, assignment_basics, exercise_id)
 
         exercise_instructions = exercise_details["instructions"]
-
 
         user_code_lines = user_code.split("\n")
 
@@ -44,11 +44,13 @@ class LLMHandler(BaseUserHandler):
                 if line.strip()[:len(COMMENT_CHAR)] == COMMENT_CHAR:
                     print(f"{i}. {line}")
 
+                    if line_index_end == -1:
+                        line_index_end = i
+
+                else:
                     if line_index_end != -1:
                         line_index_start = i
-                        break
-                    else:
-                        line_index_end = i
+                        break;
 
 
             if line_index_end == -1:
@@ -61,12 +63,13 @@ class LLMHandler(BaseUserHandler):
                 }
             
             if line_index_start == -1:
-                line_index_start = line_index_end
+                line_index_start = 0
 
             full_comment = user_code_lines[line_index_start:line_index_end+1]
 
             # Turn comment into prompt for the model
             comments = " ".join([c.strip()[len(COMMENT_CHAR):].strip() for c in full_comment])
+            print(comments)
 
             template_system_message = "You write C programs. You only provide code. You write at most one function, including main."
 
@@ -86,13 +89,14 @@ class LLMHandler(BaseUserHandler):
 
             full_solution = message.split("```")[1]
 
-            self.content.save_llm_generation(course_id, assignment_id, exercise_id, self.get_current_user(), comments, full_solution, exercise_details["llm_interaction_type"])
+            llm_generation_id = self.content.save_llm_generation(course_id, assignment_id, exercise_id, self.get_current_user(), comments, full_solution, exercise_details["llm_interaction_type"])
 
             return {
                 "full_solution": full_solution,
                 "lines": full_solution.split("\n")[1:],
                 "initial_indent": initial_indent,
-                "reason": ""
+                "reason": "",
+                "llm_generation_id": llm_generation_id
             }
 
         except Exception as e:
@@ -181,54 +185,11 @@ class LLMHandler(BaseUserHandler):
 
             self.write(user_code)
 
-        elif message_type == "chat":
-            
-            print(":::Chat Message:::")
+        if message_type == "update_lines_used":
+           
+           llm_generation_id = self.get_body_argument("llm_generation_id")
+           lines_used = self.get_body_argument("lines_used")
 
-            chat_input = self.get_body_argument("chat_input")
-            print(f"Chat Message: {chat_input}")
+           self.content.update_llm_lines_used(llm_generation_id, lines_used)
 
-            self.application.messages.append()
-
-
-            try:
-                chat_completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=self.application.messages)
-            except Exception as e:
-                print(e)
-
-            print(f"ChatGPT Response: {chat_completion.choices[0].message.content}")
-
-            self.application.messages.append(chat_completion.choices[0].message)
-
-            self.write(chat_completion.choices[0].message.content);
-    
-        elif message_type == "next_line":
-            self.next_line(course_id, assignment_id, exercise_id)
-
-        elif message_type == "whats_useful":
-            await self.whats_useful(course_id, assignment_id, exercise_id)
-
-        elif message_type == "natural_hint":
-
-            print(":::Natural Hint:::")
-
-            user_code = self.get_body_argument("user code");
-
-            course_basics = await self.get_course_basics(course_id)
-            assignment_basics = await self.get_assignment_basics(course_basics, assignment_id)
-            exercise_details = await self.get_exercise_details(course_basics, assignment_basics, exercise_id)
-
-            exercise_instructions = exercise_details["instructions"]
-
-            message_text = f"The exercise is {exercise_instructions}. The current code is \"{user_code}\". Without providing code, give a hint for the next step in creating a complete solution."
-
-            messages = [{"role": "user", "content": message_text}]
-
-            try:
-                chat_completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
-            except Exception as e:
-                print(e)
-
-            self.application.messages.append(chat_completion.choices[0].message)
-
-            self.write(chat_completion.choices[0].message.content)
+           print("What")
