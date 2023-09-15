@@ -1,3 +1,116 @@
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"
+    integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.1/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.1.1/firebase-auth.js"
+
+    
+    //import initializeApp from "firebase/app";
+    //import  from "firebase/auth";
+
+
+
+    // TODO: Add SDKs for Firebase products that you want to use
+
+    // https://firebase.google.com/docs/web/setup#available-libraries
+
+
+    // Your web app's Firebase configuration
+
+    const firebaseConfig = {
+
+        apiKey: "AIzaSyA46dK6DTOlBAIQK39_5COfkDCkraYNOCU",
+
+        authDomain: "ahab159-bash-codebuddy.firebaseapp.com",
+
+        projectId: "ahab159-bash-codebuddy",
+
+        storageBucket: "ahab159-bash-codebuddy.appspot.com",
+
+        messagingSenderId: "814813546832",
+
+        appId: "1:814813546832:web:cd2f1e62a024665d1b8455"
+
+    };
+
+
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+
+    const provider = new GoogleAuthProvider();
+
+    const auth = getAuth(app);
+    
+    
+    function log_in() {
+        signInWithPopup(auth, provider)
+        .then((result) => {
+                // This gives you a Google Access Token. You can use it to access the Google API.
+                const credential = GoogleAuthProvider.credentialFromResult(result);
+                const token = credential.accessToken;
+                // The signed-in user info.
+                const user = result.user;
+                
+                console.log(user)
+                // IdP data available using getAdditionalUserInfo(result)
+                // ...
+                /*
+                var xhttp = new XMLHttpRequest();
+                
+                xhttp.onreadystatechange = () => {
+                    console.log("Okay");
+                    if (this.readyState == 4) {
+                        console.log(this);
+                    }
+                }
+                
+                xhttp.open("POST", "/devlogin", true)
+                xhttp.send(`email=${user.email}`)
+                */
+               
+                $.ajax({
+                    type: 'POST',
+                    url: "/firebaselogin",
+                    data: {
+                        "email": user.email,
+                        "name": user.displayName
+                    },
+                    async: true
+                }).done(result => {
+
+                    window.location.replace("/courses");
+
+                })
+
+                //$.ajax();
+
+            }).catch((error) => {
+                // Handle Errors here.
+                const errorCode = error.code;
+                const errorMessage = error.message;
+                // The email of the user's account used.
+                const email = error.customData.email;
+                // The AuthCredential type that was used.
+                const credential = GoogleAuthProvider.credentialFromError(error);
+
+                console.log(errorMessage);
+                // ...
+            });
+    }
+
+    document.getElementById("sign_in").onclick = log_in
+
+</script>
+
+<script>
+
+    //console.log(auth);
+
+    
+</script>
+
 <div>
     <div class="landing-main-row">
         <div class="landing-main-row-item">
@@ -6,7 +119,7 @@
             <p style="font-size: 20px;">Learn computer programming in a friendly, interactive environment. Sign in to gain access to course materials assigned by your instructor.</p>
         
             <div class="top-space">
-                <a class="button is-primary is-medium" href="/courses">Sign in</a>
+                <a id="sign_in" class="button is-primary is-medium">Sign in</a>
             </div>
         </div>
         <div class="landing-main-row-item">

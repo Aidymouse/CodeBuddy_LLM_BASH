@@ -17,6 +17,9 @@ class LLMHandler(BaseUserHandler):
     '''
 
 
+    async def complete_line(self, course_id, assignment_id, exercise_id, cursor_position):
+        pass
+
     async def get_solution_lines(self, course_id, assignment_id, exercise_id):
         user_code = self.get_body_argument("user code")
 

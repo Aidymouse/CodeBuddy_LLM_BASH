@@ -93,6 +93,7 @@ def make_app(settings_dict):
 
             # Aidan added this
             url(r"/llm/([^/]+)/([^/]+)/([^/]+)/([^/]+)", LLMHandler, name="llm"),
+            url(r"/firebaselogin", FirebaseLoginHandler, name="firebase_login"),
         ],
         autoescape=None,
         debug=(int(settings_dict["f_num_processes"]) == 1 and 'DEBUG' in os.environ and os.environ['DEBUG'] == 'true'),
