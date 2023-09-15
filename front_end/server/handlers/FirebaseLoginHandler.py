@@ -15,7 +15,11 @@ class FirebaseLoginHandler(BaseOtherHandler):
             
             # Ensure the email is a UoA one
             if email.split("@")[1] != "aucklanduni.ac.nz":
-                self.write("Please use a valid university of auckland email")
+                self.write({
+                    "success": False,
+                    "error_message": "Please use a valid University of Auckland email address ending in \"@aucklanduni.ac.nz\"",
+                    "redirect": ""  
+                })
                 return;
 
             full_name = self.get_body_argument("name")
@@ -34,11 +38,16 @@ class FirebaseLoginHandler(BaseOtherHandler):
 
             self.set_secure_cookie("user_id", UPI, expires_days=30)
 
-            redirect_path = self.get_secure_cookie("redirect_path")
-            self.clear_cookie("redirect_path")
-            if not redirect_path:
-                redirect_path = "/"
-            self.redirect(redirect_path)
+            #redirect_path = self.get_secure_cookie("redirect_path")
+            #self.clear_cookie("redirect_path")
+            #if not redirect_path:
+            #    redirect_path = "/"
+            
+            self.write({
+                "success": True,
+                "error_message": "",
+                "redirect": "/courses"  
+            })
 
         except Exception as inst:
             print(inst)

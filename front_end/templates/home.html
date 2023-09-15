@@ -45,6 +45,7 @@
     
     
     function log_in() {
+
         signInWithPopup(auth, provider)
         .then((result) => {
                 // This gives you a Google Access Token. You can use it to access the Google API.
@@ -80,7 +81,19 @@
                     async: true
                 }).done(result => {
 
-                    window.location.replace("/courses");
+                    console.log(result)
+
+                    if (result.success == true) {
+
+                        window.location.replace("/courses");
+
+                    } else {
+
+                        $("#log-in-error-message-text").text(result.error_message);
+                        $("#log-in-error-message").removeClass("log-in-error-hidden");
+
+                    }
+                    
 
                 })
 
@@ -120,9 +133,44 @@
         
             <div class="top-space">
                 <a id="sign_in" class="button is-primary is-medium">Sign in</a>
+            
+                <div id="log-in-error-message" class="log-in-error-hidden">
+                    <img src="/static/exclamation_mark.png">
+                    <p id="log-in-error-message-text"></p>
+                </div>
+            
             </div>
         </div>
         <div class="landing-main-row-item">
             <img src="/static/my-ide.png">
         </div>
     </div>
+</div>
+
+<style>
+    .log-in-error-hidden {
+        display: none !important;
+    }
+
+    #log-in-error-message {
+
+        height: inherit;
+
+        padding: 10px;
+
+        border-radius: 0.5em;
+        color: white;
+        background-color: hsl(348deg, 86%, 61%);
+
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    #log-in-error-message img {
+        height: 30px;
+    }
+
+
+</style>
