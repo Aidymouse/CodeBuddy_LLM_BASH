@@ -85,16 +85,6 @@
                 </p>
             </div>
 
-            <div class="a-visible">
-                <p><strong>LLM Interaction Type: </strong>
-                <div class="select is-grey">
-                    <select id="llm_interaction_type" class="edit-select">
-                        <option value="lines">Line by Line</option>
-                        <option value="whole">Whole Solution</option>
-                    </select>
-                </div>
-                </p>
-            </div>
         </div>
 
         <div class="top-space">
@@ -701,8 +691,6 @@
             const solution_code = solution_code_editor.getValue().replace("\r", "");
             const weight = getValue("weight");
 
-            const llm_interaction_type = getValue("llm_interaction_type")
-
             // Check submission details
             if (title == "")
                 return(showResultMessage("Please provide a title.", "danger"));
@@ -758,7 +746,6 @@
                 "max_submissions": getValue("max_submissions"),
                 "data_files": exercise_details_obj["data_files"],
                 "tests": exercise_details_obj["tests"],
-                "llm_interaction_type": llm_interaction_type
             }
 
             showResultMessage("<b>Please wait...</b>", "warning");

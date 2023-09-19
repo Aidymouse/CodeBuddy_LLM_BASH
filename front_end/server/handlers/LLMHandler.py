@@ -2,197 +2,140 @@ from BaseUserHandler import *
 from datetime import datetime, timedelta
 
 import openai
+import re
 
 class LLMHandler(BaseUserHandler):
-    #entrypoint = 'llm_chat'
+    #entrypoint = llm
 
-    '''
-    def __init__(self):
-
-        initial_system_message = "You are a programming tutor. Your answers are short and simple, around 1-5 sentences."
-
-        self.messages = [{ "role": "system", "content": initial_system_message }]
-    
-        openai.api_key = self.application.settings["openai_api_key"];
-    '''
-
-
-    async def complete_line(self, course_id, assignment_id, exercise_id, cursor_position):
-        pass
-
-    async def get_solution_lines(self, course_id, assignment_id, exercise_id):
-        user_code = self.get_body_argument("user code")
-
-        course_basics = await self.get_course_basics(course_id)
-        assignment_basics = await self.get_assignment_basics(course_basics, assignment_id)
-        exercise_details = await self.get_exercise_details(course_basics, assignment_basics, exercise_id)
-
-        exercise_instructions = exercise_details["instructions"]
-
-        user_code_lines = user_code.split("\n")
-
-        line_index_start = -1
-        line_index_end = -1
-
-        COMMENT_CHAR = "//"
+    async def post(self, action, course_id, assignment_id, exercise_id):
 
         try:
+            print(action)
 
-            # Get latest contiguous block of comments that start with designated comment character
-
-            for i in range(len(user_code_lines)-1, -1, -1):
-                line = user_code_lines[i]
-                
-                # Does line start with comment character?
-                if line.strip()[:len(COMMENT_CHAR)] == COMMENT_CHAR:
-                    print(f"{i}. {line}")
-
-                    if line_index_end == -1:
-                        line_index_end = i
-
-                else:
-                    if line_index_end != -1:
-                        line_index_start = i
-                        break;
-
-
-            if line_index_end == -1:
-                print("No comments!")
-                return {
-                    "full_solution": "",
-                    "lines": [],
-                    "initial_indent": "",
-                    "reason": "no comments"
-                }
+            if action == "generate":
+                await self.generate(course_id, assignment_id, exercise_id)
             
-            if line_index_start == -1:
-                line_index_start = 0
-
-            full_comment = user_code_lines[line_index_start:line_index_end+1]
-
-            # Turn comment into prompt for the model
-            comments = " ".join([c.strip()[len(COMMENT_CHAR):].strip() for c in full_comment])
-            print(comments)
-
-            template_system_message = "You write C programs. You only provide code. You write at most one function, including main."
-
-            prompt = template_system_message + " " + comments
-
-            print(f"Asking: {prompt}")
-
-            messages_from_comment = [{"role": "user", "content": prompt}]
-
-            chat_completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages_from_comment)
-
-            message = chat_completion.choices[0].message.content
-            print(f"Response: {message}")
-
-            initial_indent = full_comment[0].split(COMMENT_CHAR)[0]
-
-
-            full_solution = message.split("```")[1]
-
-            llm_generation_id = self.content.save_llm_generation(course_id, assignment_id, exercise_id, self.get_current_user(), comments, full_solution, exercise_details["llm_interaction_type"])
-
-            return {
-                "full_solution": full_solution,
-                "lines": full_solution.split("\n")[1:],
-                "initial_indent": initial_indent,
-                "reason": "",
-                "llm_generation_id": llm_generation_id
-            }
-
+            elif action == "retry":
+                pass
         except Exception as e:
             print(e)
-            return ""
 
-        '''
-        message_text = f"The exercise is ${exercise_instructions}. The current code is \"{user_code}\". What is a reasonable next line of code?"
-        
-        messages = [{"role": "user", "content": message_text}]
+
+    async def generate(self, course_id, assignment_id, exercise_id):
+        template_prompt = '''You are a programming assistant that provides C code to beginner programmers. Don't generate more than one code statement.
+
+The problem description is: [[problem_description]]
+
+The provided code is:
+[[provided_code]]
+
+Provide code that, when replacing the token marked "CURSOR", completes only the next line. If the provided code completely solves the problem description, provide a short code comment saying so. If the line contains an error other than being incomplete, provide a short comment describing why the line is wrong, followed by the next line of code that helps amend the error. Ignore the CURSOR token when considering if the code is correct. Do not refer to the CURSOR token in comments. Anything you provide that isn't code should be commented out.'''
+
+        #print("Gamer")
+
+        openai.api_key = self.settings["openai_api_key"]
+        openai.organization = self.settings["openai_org_id"]
 
         try:
-            chat_completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
+            user_code = self.get_body_argument("user_code")
+            #print(user_code)
+
+            cursor_row = int(self.get_body_argument("cursor_row"))
+            cursor_col = int(self.get_body_argument("cursor_column"))
+
+            print(f"Cursor: (row {cursor_row}, col {cursor_col})")
+
+            user_code_lines = re.split("\n", user_code)
+            print(user_code_lines)
+            #user_code.split("\n")
+
+            # White space not retained on last line if it's only whitespace, but cursor position is correct, so we can fake it
+            while cursor_row >= len(user_code_lines)-1:
+                user_code_lines.append("".join([" " for i in range(cursor_col)]))
+                #cursor_row = len(user_code_lines)
+            
+            if cursor_col > len(user_code_lines[cursor_row]):
+                spaces_to_add = cursor_col - len(user_code_lines[cursor_row])
+                user_code_lines[cursor_row] += "".join([" " for i in range(spaces_to_add)])
+            
+            print(user_code_lines)
+
+            cursor_line = user_code_lines[cursor_row]
+            
+            '''
+
+            
+            # White space is lost at the end of a line
+            '''
+
+            print(f"Cursor Pos: {cursor_row}, {cursor_col}")
+            print(f"Cursor Line: {cursor_line}")
+
+
+            # Assemble User Code with CURSOR token
+            ammended_user_code = "\n".join(user_code_lines[:cursor_row]) 
+            print("===1===")
+            print(ammended_user_code)
+            
+            ammended_user_code += "\n" + cursor_line[:cursor_col] + "CURSOR" + cursor_line[cursor_col:] + "\n"
+            print("===2===")
+            print(ammended_user_code)
+            
+            #print(len(user_code_lines))
+
+            # Append a last line 
+            if cursor_row != len(user_code_lines)-1:
+                ammended_user_code += "\n".join(user_code_lines[cursor_row+1:])
+                print("===3===")
+                print(ammended_user_code)
+
+            # Get instruction text
+            course_basics = await self.get_course_basics(course_id)
+            assignment_basics = self.content.get_assignment_basics(course_basics, assignment_id)
+            exercise_details = await self.get_exercise_details(course_basics, assignment_basics, exercise_id)
+
+            # Assemble final prompt
+            prompt = template_prompt.replace("[[problem_description]]", exercise_details['instructions']).replace("[[provided_code]]", ammended_user_code)
+
+            print("===Prompt===")
+            print(prompt)
+
+            # Call Model
+            messages = [{"role": "user", "content": prompt}]
+            c = openai.ChatCompletion.create(model="gpt-4", temperature=1.2, messages=messages, max_tokens=500)
+            generated_code = c.choices[0].message.content
+
+            # Assemble code again, this time inserting the generation
+            # This is a little more robust than a blatant .replace, in case the user happened to use the term CURSOR somewhere in their code
+            inserted_user_code = ammended_user_code = "\n".join(user_code_lines[:cursor_row]) 
+            inserted_user_code += "\n" + cursor_line[:cursor_col] + generated_code + cursor_line[cursor_col:] + "\n"
+            if cursor_row != len(user_code_lines)-1:
+                inserted_user_code += "\n".join(user_code_lines[cursor_row+1:])
+
+            try:
+                self.content.save_llm_generation(course_id, assignment_id, exercise_id, self.get_current_user(), generated_code, ammended_user_code)
+            except Exception as e:
+                print(e)
+                self.write({
+                    "status": "DB failed",
+                    "generated_code": "" 
+                })
+                return
+
+            self.write({
+                "status": "success",
+                "generated_code": generated_code,
+            })
+
         except Exception as e:
             print(e)
 
-        self.application.messages.append(chat_completion.choices[0].message)
+            self.write({
+                "status": "failed",
+                "generated_code": ""
+            })
 
-        self.write(chat_completion.choices[0].message.content)
-        '''
+    
 
 
-
-
-    def chat_message(self):
-        pass
-
-    async def next_line(self, course_id, assignment_id, exercise_id):
-        print(":::Next Line:::")
-
-        user_code = self.get_body_argument("user code")
-
-        course_basics = await self.get_course_basics(course_id)
-        assignment_basics = await self.get_assignment_basics(course_basics, assignment_id)
-        exercise_details = await self.get_exercise_details(course_basics, assignment_basics, exercise_id)
-
-        exercise_instructions = exercise_details["instructions"]
-
-        message_text = f"The exercise is ${exercise_instructions}. The current code is \"{user_code}\". What is a reasonable next line of code?"
         
-        messages = [{"role": "user", "content": message_text}]
-
-        try:
-            chat_completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
-        except Exception as e:
-            print(e)
-
-        self.application.messages.append(chat_completion.choices[0].message)
-
-        self.write(chat_completion.choices[0].message.content)
-
-
-    async def whats_useful(self, course_id, assignment_id, exercise_id):
-        print(":::Whats Useful:::")
-
-        user_code = self.get_body_argument("user code")
-
-        course_basics = await self.get_course_basics(course_id)
-        assignment_basics = await self.get_assignment_basics(course_basics, assignment_id)
-        exercise_details = await self.get_exercise_details(course_basics, assignment_basics, exercise_id)
-
-        exercise_instructions = exercise_details["instructions"]
-
-        message_text = f"The exercise is ${exercise_instructions}. The current code is \"{user_code}\". What is useful code component to solve this problem?"
-        
-        messages = [{"role": "user", "content": message_text}]
-
-        try:
-            chat_completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
-        except Exception as e:
-            print(e)
-
-        self.application.messages.append(chat_completion.choices[0].message)
-
-        self.write(chat_completion.choices[0].message.content)
-
-
-    async def post(self, message_type, course_id, assignment_id, exercise_id):
-
-        openai.api_key = self.application.settings["openai_api_key"]
-        
-        print(f"Contacting LLM: {message_type}")
-
-        if message_type == "solution_lines":
-            user_code = await self.get_solution_lines(course_id, assignment_id, exercise_id)
-
-            self.write(user_code)
-
-        if message_type == "update_lines_used":
-           
-           llm_generation_id = self.get_body_argument("llm_generation_id")
-           lines_used = self.get_body_argument("lines_used")
-
-           self.content.update_llm_lines_used(llm_generation_id, lines_used)
-
-           print("What")

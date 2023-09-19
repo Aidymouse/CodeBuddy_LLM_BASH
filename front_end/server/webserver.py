@@ -198,8 +198,7 @@ if __name__ == "__main__":
         }
 
         application.settings["openai_api_key"] = secrets_dict["openai_api_key"]
-
-        application.messages = [{ "role": "system", "content": "You are a programming tutor. Your answers are short and simple, around 1-5 sentences." }]
+        application.settings["openai_org_id"] = secrets_dict["openai_org_id"]
 
         server.bind(int(settings_dict["f_port"]))
         server.start(int(settings_dict["f_num_processes"]))

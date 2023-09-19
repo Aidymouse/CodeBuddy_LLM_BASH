@@ -1,0 +1,56 @@
+problem,test_num,test,response,inserted response
+'Write a function named findSmallest that finds the index of the smallest value in an array. If there are multiple smallest values, return the index of the first one.','1','int findSmallest(int arr[], int size){CURSOR','int i, minIndex = 0;','int findSmallest(int arr[], int size){int i, minIndex = 0;'
+'Write a function named findSmallest that finds the index of the smallest value in an array. If there are multiple smallest values, return the index of the first one.','2','int findSmallest(int arr[], int size){
+   int i, min_index = 0;
+ for (i = 0; CURSOR','i < size; i++)','int findSmallest(int arr[], int size){
+   int i, min_index = 0;
+ for (i = 0; i < size; i++)'
+'Write a function named findSmallest that finds the index of the smallest value in an array. If there are multiple smallest values, return the index of the first one.','3','int findSmallest(int arr[], int size){
+   int i, min_index = 0;
+ for (i = 0; i < size; i++){CURSOR','if(arr[i] < arr[min_index]) min_index = i;','int findSmallest(int arr[], int size){
+   int i, min_index = 0;
+ for (i = 0; i < size; i++){if(arr[i] < arr[min_index]) min_index = i;'
+'Write a function named findSmallest that finds the index of the smallest value in an array. If there are multiple smallest values, return the index of the first one.','4','int findSmallest(int arr[], int size){
+   int i, min_index = 0;
+ for (i = 0; i < size; i++){
+       if (arr[i] < arr[CURSOR]) {
+            min_index=i;
+        }
+    }
+}','min_index //replace the CURSOR with min_index. It should compare the current array element with the current minimum element found not with a fixed position.','int findSmallest(int arr[], int size){
+   int i, min_index = 0;
+ for (i = 0; i < size; i++){
+       if (arr[i] < arr[min_index //replace the CURSOR with min_index. It should compare the current array element with the current minimum element found not with a fixed position.]) {
+            min_index=i;
+        }
+    }
+}'
+'Write a function named findSmallest that finds the index of the smallest value in an array. If there are multiple smallest values, return the index of the first one.','5','int findSmallest(int arr[], int size){
+   int i, min_index = 0;
+ for (i = 0; i < size; i++){
+       if (arr[i] < arr[min_index]) {
+            min_index=i;
+        }
+    }
+    return min_index;
+}CURSOR','// The provided code has no error. It's already complete and functional. So, no statement is needed to be added at the CURSOR position.','int findSmallest(int arr[], int size){
+   int i, min_index = 0;
+ for (i = 0; i < size; i++){
+       if (arr[i] < arr[min_index]) {
+            min_index=i;
+        }
+    }
+    return min_index;
+}// The provided code has no error. It's already complete and functional. So, no statement is needed to be added at the CURSOR position.'
+'Write a function named findSmallest that finds the index of the smallest value in an array. If there are multiple smallest values, return the index of the first one.','6','askjdhfsakjdnfbCURSOR','int findSmallest(int* arr, int size) {','askjdhfsakjdnfbint findSmallest(int* arr, int size) {'
+'Write a function named findSmallest that finds the index of the smallest value in an array. If there are multiple smallest values, return the index of the first one.','7','int findSmallest(int arr[], int size){
+   int i, min_index = 0;
+ for (i = 0; i < size; i--){CURSOR','The line of code contains a semantic error as the loop counter is continuously decreasing which can lead to an infinite loop.
+
+Replace the line with:
+if (arr[i] < arr[min_index]) min_index = i;','int findSmallest(int arr[], int size){
+   int i, min_index = 0;
+ for (i = 0; i < size; i--){The line of code contains a semantic error as the loop counter is continuously decreasing which can lead to an infinite loop.
+
+Replace the line with:
+if (arr[i] < arr[min_index]) min_index = i;'
