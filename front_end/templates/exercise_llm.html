@@ -198,8 +198,9 @@
                 <div id="llm-col">
 
                     
-                    <button class="button" id="lines-solution-button" onclick="llm_generate()">Complete Line</button>
+                    <button class="button" id="llm-generate-button" onclick="llm_generate()">Complete Line</button>
                     <!--<button class="button" onclick="whats_useful_llm()">What's useful?</button>-->
+                    <button class="button" id="llm-retry-button" onclick="llm_retry()">Retry</button>
                 </div>
 
 
@@ -366,35 +367,30 @@
             
             <!-- Ace Editor Scripts -->
             <script>
-                let ace_edited_by_llm_counter = 0;
-                let active_solution_id = -1;
-
+                
                 ace.require("ace/ext/language_tools");
-
+                
                 var editor = ace.edit("user_code", {
                     theme: "ace/theme/{{ user_info['ace_theme'] }}",
                     autoScrollEditorIntoView: false,
                     minLines: 20,
                     fontSize: "12pt"
                 });
-
+                
+                let change_buffer_counter = 0;
                 editor.on("change", () => {
 
-                    if (ace_edited_by_llm_counter > 0) {
-                        ace_edited_by_llm_counter -= 1;
-                        return;   
+                    console.log(`Changed: ${change_buffer_counter}`);
+
+                    if (change_buffer_counter > 0) {
+                        change_buffer_counter -= 1;
+                        return;
                     } else {
+                        console.log("Disabling button")
                         // User has edited the panel
 
                         // Reset the solution stuff
-                        $("#next-line-button").attr("disabled", true);
-                        if ( active_solution_id != -1 ) {
-
-                            update_llm_lines_used()
-
-                            active_solution_id = -1
-
-                        }
+                        $("#llm-retry-button").attr("disabled", true);
 
                     }
                 });
@@ -491,36 +487,111 @@
                     setInterval(isTakingRestrictedAssignment, 60000);
                 {% end %}
 
-                 function llm_generate() {
+                let code_before_edits = "";
+                let cursor_pos_before_edits = null;
+                
+                let revertable = false;
 
-                        let c = editor.selection.getCursor();
+                function get_accurate_code() {
 
-                        $.ajax({
-                            type: 'POST',
-                            url: "/llm/generate/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
-                            data: {
-                                "user_code": get_user_code(),
-                                "cursor_row": c.row,
-                                "cursor_column": c.column,
-                            },
-                            async: true
-                        }).done(result => {
+                    let cursor_pos = editor.selection.getCursor();
+                    let user_code = get_user_code();
 
-                            console.log(result);
+                    console.log(cursor_pos);
+                    console.log(user_code);
 
-                            if (result["status"] == "success"){
-
-                                //editor.setValue(result["generated_code"]);
-                                editor.session.insert(c, result["generated_code"])
-                                //editor.gotoLine(0, 5);
-                            
-                            }
-
-
-
-
-                        })
+                    let code_lines = user_code.split("\n")
+                    indent = " ".repeat(cursor_pos.column)
+                    while (cursor_pos.row >= code_lines.length) {
+                        user_code += "\n" + indent
+                        code_lines.push(indent)
                     }
+
+                    return user_code
+
+                }
+
+                function llm_generate() {
+
+                    let c = editor.selection.getCursor();
+                    let user_code = get_accurate_code();
+
+                    $.ajax({
+                        type: 'POST',
+                        url: "/llm/generate/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
+                        data: {
+                            "user_code": get_accurate_code(),
+                            "cursor_row": c.row,
+                            "cursor_column": c.column,
+                        },
+                        async: true
+                    }).done(result => {
+
+                        console.log(result);
+
+                        if (result["status"] == "success"){
+
+                            //editor.setValue(result["generated_code"]);
+                            change_buffer_counter = 1;
+                            editor.session.insert(c, result["generated_code"])
+                            //editor.gotoLine(0, 5);
+
+                            code_before_edits = user_code;
+                            cursor_pos_before_edits = c;
+                            $("#llm-retry-button").attr("disabled", false);
+
+                            
+                        }
+                        
+
+
+
+                    })
+                }
+
+                function llm_retry() {
+                    console.log("RETRY!!")
+                    
+                    editor.setValue(code_before_edits);
+                    editor.clearSelection();
+
+                    $.ajax({
+                        type: 'POST',
+                        url: "/llm/retry/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
+                        data: {
+                            "user_code": code_before_edits,
+                            "cursor_row": cursor_pos_before_edits.row,
+                            "cursor_column": cursor_pos_before_edits.column,
+                        },
+                        async: true
+                    }).done(result => {
+
+                        console.log(result);
+
+                        if (result["status"] == "success") {
+
+                            //editor.setValue(result["generated_code"]);
+                            console.log(cursor_pos_before_edits);
+
+                            editor.session.insert(cursor_pos_before_edits, result["generated_code"])
+                            //editor.gotoLine(0, 5);
+
+                            $("#llm-retry-button").attr("disabled", false);
+                            //code_before_edits = user_code;
+                            //$("#llm-revert-button").attr("disabled", false);
+                            // Enable Retry Button
+                            // Enable Revert Button
+                            //$("#llm-revert-button").attr("disabled", true);
+
+                        }
+
+
+
+
+                    })
+                }
+
+
             </script>
 
             <!-- LLM Functions -->

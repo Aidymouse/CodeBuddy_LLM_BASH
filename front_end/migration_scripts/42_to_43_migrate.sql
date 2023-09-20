@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS llm_generations (
     course_id integer NOT NULL,
     assignment_id integer NOT NULL,
     exercise_id integer NOT NULL,
+    generation_mode text,
     generated_code text,
     prompt_code text,
     date_created DATETIME NOT NULL,

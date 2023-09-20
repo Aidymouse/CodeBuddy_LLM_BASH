@@ -13,15 +13,16 @@ class LLMHandler(BaseUserHandler):
             print(action)
 
             if action == "generate":
-                await self.generate(course_id, assignment_id, exercise_id)
+                await self.generate(course_id, assignment_id, exercise_id, 1.2, "generate")
             
             elif action == "retry":
-                pass
+                await self.generate(course_id, assignment_id, exercise_id, 1.4, "retry")
+
         except Exception as e:
             print(e)
 
 
-    async def generate(self, course_id, assignment_id, exercise_id):
+    async def generate(self, course_id, assignment_id, exercise_id, model_temperature, gen_method):
         template_prompt = '''You are a programming assistant that provides C code to beginner programmers. Don't generate more than one code statement.
 
 The problem description is: [[problem_description]]
@@ -63,7 +64,6 @@ Provide code that, when replacing the token marked "CURSOR", completes only the 
             cursor_line = user_code_lines[cursor_row]
             
             '''
-
             
             # White space is lost at the end of a line
             '''
@@ -102,7 +102,7 @@ Provide code that, when replacing the token marked "CURSOR", completes only the 
 
             # Call Model
             messages = [{"role": "user", "content": prompt}]
-            c = openai.ChatCompletion.create(model="gpt-4", temperature=1.2, messages=messages, max_tokens=500)
+            c = openai.ChatCompletion.create(model="gpt-4", temperature=model_temperature, messages=messages, max_tokens=500)
             generated_code = c.choices[0].message.content
 
             # Assemble code again, this time inserting the generation
@@ -113,7 +113,7 @@ Provide code that, when replacing the token marked "CURSOR", completes only the 
                 inserted_user_code += "\n".join(user_code_lines[cursor_row+1:])
 
             try:
-                self.content.save_llm_generation(course_id, assignment_id, exercise_id, self.get_current_user(), generated_code, ammended_user_code)
+                self.content.save_llm_generation(course_id, assignment_id, exercise_id, self.get_current_user(), generated_code, ammended_user_code, gen_method)
             except Exception as e:
                 print(e)
                 self.write({
