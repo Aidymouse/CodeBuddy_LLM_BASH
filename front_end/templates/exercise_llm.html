@@ -123,93 +123,89 @@
 
             
 
-            <div id="llm-grid">
 
-                <div id="exercise-col">
-                    <div class="instructions">
-                        <div id="instructions">
-                            {{ exercise_details["instructions"] }}
-                            
-                            {% if "previous_submission_code" in exercise_details %}
-                                <p><a class="button is-primary is-outlined" onclick="copy_code_from_previous_exercise()">Copy code from previous exercise</a></p>
-                            {% end %}
-                        </div>
-
-                        {% if exercise_basics["enable_pair_programming"] %}
-                            <hr>
-                            <p><i style='margin: 0 .5em;' class="fab fa-product-hunt"></i><em>Pair programming is enabled for this exercise.</em></p>
+            <div id="exercise-col">
+                <div class="instructions">
+                    <div id="instructions">
+                        {{ exercise_details["instructions"] }}
+                        
+                        {% if "previous_submission_code" in exercise_details %}
+                            <p><a class="button is-primary is-outlined" onclick="copy_code_from_previous_exercise()">Copy code from previous exercise</a></p>
                         {% end %}
                     </div>
 
-                    {% if len(exercise_details["data_files"]) > 0 %}
-                        <div id="data_file_div" class="top-space">
-                        <h6>Data files:</h6>
-
-                        {% for data_file_index in range(len(exercise_details["data_files"])) %}
-                            <p>
-                                <!--File name-->
-                                <a class="is-family-monospace is-size-5" href="/download_file/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}/{{ sorted(list(exercise_details['data_files'].keys()))[data_file_index] }}">{{ sorted(list(exercise_details["data_files"].keys()))[data_file_index] }}</a>
-
-                                <!--Toggle button-->
-                                <a class="button is-white" id="data_button_{{ data_file_index }}" onclick="showHideData('data_panel_{{ data_file_index }}', 'data_button_{{ data_file_index }}')">Show</a>
-
-                                <!--File contents-->
-                                <pre id="data_panel_{{ data_file_index }}" hidden>
-                                    {{ exercise_details["data_files"][sorted(list(exercise_details["data_files"].keys()))[data_file_index]].rstrip("\n") }}
-                                </pre>
-                            </p>
-                        {% end %}
-                        </div>
+                    {% if exercise_basics["enable_pair_programming"] %}
+                        <hr>
+                        <p><i style='margin: 0 .5em;' class="fab fa-product-hunt"></i><em>Pair programming is enabled for this exercise.</em></p>
                     {% end %}
+                </div>
 
-                    {% if exercise_details["hint"] != "" %}
-                        <div class="top-space">
-                            <button id="hint_button" class="button is-warning" onclick="showHideHint()">Show hint</button>
-                        </div>
+                {% if len(exercise_details["data_files"]) > 0 %}
+                    <div id="data_file_div" class="top-space">
+                    <h6>Data files:</h6>
 
-                        <div id="hint_text" class="is-hidden hint-text"><p style="margin-top: 10px;">{{ exercise_details["hint"] }}</p></div>
+                    {% for data_file_index in range(len(exercise_details["data_files"])) %}
+                        <p>
+                            <!--File name-->
+                            <a class="is-family-monospace is-size-5" href="/download_file/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}/{{ sorted(list(exercise_details['data_files'].keys()))[data_file_index] }}">{{ sorted(list(exercise_details["data_files"].keys()))[data_file_index] }}</a>
+
+                            <!--Toggle button-->
+                            <a class="button is-white" id="data_button_{{ data_file_index }}" onclick="showHideData('data_panel_{{ data_file_index }}', 'data_button_{{ data_file_index }}')">Show</a>
+
+                            <!--File contents-->
+                            <pre id="data_panel_{{ data_file_index }}" hidden>
+                                {{ exercise_details["data_files"][sorted(list(exercise_details["data_files"].keys()))[data_file_index]].rstrip("\n") }}
+                            </pre>
+                        </p>
                     {% end %}
+                    </div>
+                {% end %}
 
-                    <p class="top-space" id="user_code_area">
-                        <textarea class="textarea is-fullwidth monospace" rows="15" id="user_code">{% if exercise_details["starter_code"] and len(submissions) == 0 %}{{ exercise_details["starter_code"] }}{% end %}</textarea>
-                        <!--
-                        {% if assignment_details["enable_help_requests"] %}
-                            <div class="buttons is-pulled-right">
-                                {% if help_request %}
-                                    {% if help_request["more_info_needed"] %}
-                                        <a class="button is-danger is-light" onclick="showHelpRequestModal()">More info needed</a>
-                                    {% elif same_suggestion %}
-                                        <a class="button is-success is-light" onclick="showMatchingModal()">Matching suggestion</a>
-                                    {% elif help_request["approved"] %}
-                                        <a class="button is-primary" onclick="showSuggestionModal()">View suggestion</a>
-                                    {% else %}
-                                        <a class="button is-warning is-light" onclick="showSuggestionModal()">Request pending</a>
-                                    {% end %}
+                {% if exercise_details["hint"] != "" %}
+                    <div class="top-space">
+                        <button id="hint_button" class="button is-warning" onclick="showHideHint()">Show hint</button>
+                    </div>
+
+                    <div id="hint_text" class="is-hidden hint-text"><p style="margin-top: 10px;">{{ exercise_details["hint"] }}</p></div>
+                {% end %}
+
+                <p class="top-space" id="user_code_area">
+                    <textarea class="textarea is-fullwidth monospace" rows="15" id="user_code">{% if exercise_details["starter_code"] and len(submissions) == 0 %}{{ exercise_details["starter_code"] }}{% end %}</textarea>
+                    <!--
+                    {% if assignment_details["enable_help_requests"] %}
+                        <div class="buttons is-pulled-right">
+                            {% if help_request %}
+                                {% if help_request["more_info_needed"] %}
+                                    <a class="button is-danger is-light" onclick="showHelpRequestModal()">More info needed</a>
+                                {% elif same_suggestion %}
+                                    <a class="button is-success is-light" onclick="showMatchingModal()">Matching suggestion</a>
+                                {% elif help_request["approved"] %}
+                                    <a class="button is-primary" onclick="showSuggestionModal()">View suggestion</a>
                                 {% else %}
-                                    <a class="button is-white" onclick="showHelpRequestModal()">Request help</a>
+                                    <a class="button is-warning is-light" onclick="showSuggestionModal()">Request pending</a>
                                 {% end %}
-                            </div>
-                        {% end %}
-                        -->
-                    </p>
-                </div>
-
-                <!-- LLM Chat Window -->
-                <div id="llm-col">
-
-                    
-                    <button class="button" id="llm-generate-button" onclick="llm_generate()">Complete Line</button>
-                    <!--<button class="button" onclick="whats_useful_llm()">What's useful?</button>-->
-                    <button class="button" id="llm-retry-button" onclick="llm_retry()">Retry</button>
-                </div>
-
-
+                            {% else %}
+                                <a class="button is-white" onclick="showHelpRequestModal()">Request help</a>
+                            {% end %}
+                        </div>
+                    {% end %}
+                    -->
+                </p>
             </div>
+
+         
+
+
 
             <div id="saved_div" class="ml-0 mt-0 mr-2 is-pulled-right mt-0 smaller-font"></div>
 
             <div class="smaller-font is-pulled-right mt-0 mr-1"><em>{{ exercise_basics["title"] }}</em></div>
 
+            <div class="llm-buttons">
+                <button class="button" id="llm-generate-button" onclick="llm_generate()" style="width: 150px">Complete Line</button>
+                <button class="button" title="Retry Generation" id="llm-retry-button" onclick="llm_retry()"> <img src="/static/retry arrow.png"> </button>
+            </div>
+            
             <div class="buttons">
                 <a class="button is-medium is-dark" id='submit_button'>Submit</a>
 
@@ -226,6 +222,7 @@
                 <span class="icon mt-0">
                     <i class="far fa-question-circle fa-1x"></i>
                 </span>
+
             </div>
 
             <div id="max_submissions_message"></div>
@@ -516,6 +513,8 @@
                     let c = editor.selection.getCursor();
                     let user_code = get_accurate_code();
 
+                    $("#llm-generate-button").html(`<img src="/static/spin-load.gif" style="height: 100%;">`)
+                    
                     $.ajax({
                         type: 'POST',
                         url: "/llm/generate/{{ course_basics['id'] }}/{{ assignment_basics['id'] }}/{{ exercise_basics['id'] }}",
@@ -527,8 +526,9 @@
                         async: true
                     }).done(result => {
 
+                        $("#llm-generate-button").html(`Complete Line`)
                         console.log(result);
-
+                        
                         if (result["status"] == "success"){
 
                             //editor.setValue(result["generated_code"]);
@@ -540,7 +540,6 @@
                             cursor_pos_before_edits = c;
                             $("#llm-retry-button").attr("disabled", false);
 
-                            
                         }
                         
 

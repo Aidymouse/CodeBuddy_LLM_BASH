@@ -26,3 +26,13 @@
 .dont-show {
     display: none;
 }
+
+.llm-buttons {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.llm-buttons button img {
+    height: 100%;
+}
+
