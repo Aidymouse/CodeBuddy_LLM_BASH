@@ -71,6 +71,8 @@ Provide code that, when replacing the token marked "CURSOR", completes only the 
             print(f"Cursor Pos: {cursor_row}, {cursor_col}")
             print(f"Cursor Line: {cursor_line}")
 
+            co = 1
+            co += 1
 
             # Assemble User Code with CURSOR token
             ammended_user_code = "\n".join(user_code_lines[:cursor_row]) 
@@ -81,13 +83,13 @@ Provide code that, when replacing the token marked "CURSOR", completes only the 
             print("===2===")
             print(ammended_user_code)
             
-            #print(len(user_code_lines))
 
             # Append a last line 
             if cursor_row != len(user_code_lines)-1:
                 ammended_user_code += "\n".join(user_code_lines[cursor_row+1:])
                 print("===3===")
                 print(ammended_user_code)
+
 
             # Get instruction text
             course_basics = await self.get_course_basics(course_id)
@@ -105,14 +107,9 @@ Provide code that, when replacing the token marked "CURSOR", completes only the 
             c = openai.ChatCompletion.create(model="gpt-4", temperature=model_temperature, messages=messages, max_tokens=500)
             generated_code = c.choices[0].message.content
 
-            # Assemble code again, this time inserting the generation
-            # This is a little more robust than a blatant .replace, in case the user happened to use the term CURSOR somewhere in their code
-            inserted_user_code = ammended_user_code = "\n".join(user_code_lines[:cursor_row]) 
-            inserted_user_code += "\n" + cursor_line[:cursor_col] + generated_code + cursor_line[cursor_col:] + "\n"
-            if cursor_row != len(user_code_lines)-1:
-                inserted_user_code += "\n".join(user_code_lines[cursor_row+1:])
-
             try:
+                print(ammended_user_code)
+                print(co)
                 self.content.save_llm_generation(course_id, assignment_id, exercise_id, self.get_current_user(), generated_code, ammended_user_code, gen_method)
             except Exception as e:
                 print(e)

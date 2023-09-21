@@ -2011,6 +2011,10 @@ class Content:
 
 
     def save_llm_generation(self, course_id, assignment_id, exercise_id, user_id, generated_code, prompt_code, generation_mode):
+        print("===DB===")
+        print(prompt_code)
+        print("===DB===")
+
         sql = '''INSERT INTO llm_generations (course_id, assignment_id, exercise_id, user_id, generated_code, prompt_code, generation_mode, date_created)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)'''
         

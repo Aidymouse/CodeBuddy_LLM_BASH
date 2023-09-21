@@ -203,7 +203,7 @@
 
             <div class="llm-buttons">
                 <button class="button" id="llm-generate-button" onclick="llm_generate()" style="width: 150px">Complete Line</button>
-                <button class="button" title="Retry Generation" id="llm-retry-button" onclick="llm_retry()"> <img src="/static/retry arrow.png"> </button>
+                <button class="button" title="Retry Generation" id="llm-retry-button" onclick="llm_retry()" disabled="disabled"> <img src="/static/retry arrow.png"> </button>
             </div>
             
             <div class="buttons">
@@ -484,8 +484,8 @@
                     setInterval(isTakingRestrictedAssignment, 60000);
                 {% end %}
 
-                let code_before_edits = "";
-                let cursor_pos_before_edits = null;
+                let code_before_edits = get_user_code();
+                let cursor_pos_before_edits = editor.selection.getCursor();
                 
                 let revertable = false;
 
