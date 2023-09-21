@@ -508,12 +508,19 @@
 
                 }
 
+                let can_generate_right_now = true;
+
                 function llm_generate() {
+
+                    if (!can_generate_right_now) return;
+
+                    can_generate_right_now = false;
 
                     let c = editor.selection.getCursor();
                     let user_code = get_accurate_code();
 
                     $("#llm-generate-button").html(`<img src="/static/spin-load.gif" style="height: 100%;">`)
+
                     
                     $.ajax({
                         type: 'POST',
@@ -542,17 +549,22 @@
 
                         }
                         
-
+                        can_generate_right_now = true;
 
 
                     })
                 }
 
                 function llm_retry() {
+
+                    if (!can_generate_right_now) return;
+
                     console.log("RETRY!!")
                     
                     editor.setValue(code_before_edits);
                     editor.clearSelection();
+
+                    can_generate_right_now = false;
 
                     $.ajax({
                         type: 'POST',
@@ -565,6 +577,7 @@
                         async: true
                     }).done(result => {
 
+
                         console.log(result);
 
                         if (result["status"] == "success") {
@@ -575,14 +588,16 @@
                             editor.session.insert(cursor_pos_before_edits, result["generated_code"])
                             //editor.gotoLine(0, 5);
 
-                            $("#llm-retry-button").attr("disabled", false);
                             //code_before_edits = user_code;
                             //$("#llm-revert-button").attr("disabled", false);
                             // Enable Retry Button
                             // Enable Revert Button
                             //$("#llm-revert-button").attr("disabled", true);
-
+                            
                         }
+                        
+                        $("#llm-retry-button").attr("disabled", false);
+                        can_generate_right_now = true;
 
 
 
