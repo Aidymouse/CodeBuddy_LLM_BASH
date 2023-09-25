@@ -204,7 +204,7 @@
             <div class="llm-buttons">
                 <button class="button" id="llm-generate-button" onclick="llm_generate()" style="width: 150px">Complete Line</button>
                 <button class="button" title="Retry Generation" id="llm-retry-button" onclick="llm_retry()" disabled="disabled"> <img src="/static/retry arrow.png"> </button>
-                <button class="button" title="Reset to Starter Code" id="reset-button" onclick="reset_to_starter_code()"> Reset Code </button>
+                <button style="margin-left: 20px;" class="button" title="Reset to Starter Code" id="reset-button" onclick="reset_to_starter_code()"> Reset Code </button>
             </div>
             
             <div class="buttons">
@@ -611,6 +611,7 @@
 
                     editor.setValue(starter_code);
                     editor.clearSelection();
+                    editor.focus();
                 }
 
 
