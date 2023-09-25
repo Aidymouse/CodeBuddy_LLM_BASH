@@ -377,13 +377,13 @@
                 let change_buffer_counter = 0;
                 editor.on("change", () => {
 
-                    console.log(`Changed: ${change_buffer_counter}`);
+                    //console.log(`Changed: ${change_buffer_counter}`);
 
                     if (change_buffer_counter > 0) {
                         change_buffer_counter -= 1;
                         return;
                     } else {
-                        console.log("Disabling button")
+                        //console.log("Disabling button")
                         // User has edited the panel
 
                         // Reset the solution stuff

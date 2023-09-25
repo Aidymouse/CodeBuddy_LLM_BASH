@@ -78,7 +78,10 @@ function submit() {
 
     let submission_date = new Date();
 
-    post_data = {"partner_id": partner_id, "code": user_code, "date": submission_date.toLocaleString("en-US", {timeZone: "UTC"})};
+    post_date = submission_date.toLocaleString("en-US", { timeZone: "UTC" });
+    console.log(`POST: ${post_date}`);
+
+    post_data = {"partner_id": partner_id, "code": user_code, "date": post_date };
 
     $.ajax({
         type: 'POST',
@@ -441,7 +444,10 @@ function show_past_submissions() {
             else
                 button_bd_color = "failing-btn-color";
 
+            
             var submission_date = new Date(submission.date).toLocaleString();
+            
+            if (submission_date == "Invalid Date") submission_date = submission.date;
 
             if (submission.partner_name)
                 submission_html += `<button class='button ${button_bd_color}' id='submission_button_${submission.id}' style='display: block; width: 315px;' onclick='get_submission(${submission.id}, true, true)'><b>${i + 1}.</b> ${submission_date} <label class="has-tooltip-multiline has-tooltip-right" data-tooltip="Programming partner: ${submission.partner_name}"><i class="fab fa-product-hunt"></i></label></button>`;
